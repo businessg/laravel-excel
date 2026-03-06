@@ -136,16 +136,17 @@ abstract class Driver implements DriverInterface
 
     /**
      * 获取临时目录
+     * 优先使用配置 temp_dir，null 则使用系统临时目录 sys_get_temp_dir()/laravel-excel
      *
      * @return string
      * @throws ExcelException
      */
     public function getTempDir(): string
     {
-        $dir = Helper::getTempDir() . DIRECTORY_SEPARATOR . 'laravel-excel';
+        $dir = $this->config['temp_dir'] ?? Helper::getTempDir() . DIRECTORY_SEPARATOR . 'laravel-excel';
         if (!is_dir($dir)) {
             if (!mkdir($dir, 0777, true)) {
-                throw new ExcelException('Failed to build temporary directory');
+                throw new ExcelException('Failed to build temporary directory: ' . $dir);
             }
         }
         return $dir;

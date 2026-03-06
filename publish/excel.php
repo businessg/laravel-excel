@@ -18,6 +18,8 @@ return [
         'export' => [
             'rootDir' => 'export', // 导出根目录
         ],
+        // 临时文件目录，null 则使用系统临时目录 sys_get_temp_dir()/laravel-excel
+        'temp_dir' => null,
     ],
     // 日志 (使用 Laravel logging 配置中的 channel 名称，如 stack、single 等)
     'logger' => [
