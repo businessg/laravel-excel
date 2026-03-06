@@ -1,0 +1,66 @@
+{
+    "name": "businessg/laravel-excel",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "php",
+        "laravel",
+        "excel",
+        "export",
+        "import"
+    ],
+    "description": "Excel 同步/异步智能配置导入导出组件，为 Laravel 框架提供强大的 Excel 处理能力,支持无限极列头配置,页码、列头、列样式配置。",
+    "autoload": {
+        "psr-4": {
+            "BusinessG\\LaravelExcel\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "BusinessG\\LaravelExcel\\Tests\\": "tests"
+        },
+        "files": [
+            "./src/Functions.php"
+        ]
+    },
+    "require": {
+        "php": ">=8.1",
+        "ext-mbstring": "*",
+        "illuminate/support": "^10.0|^11.0",
+        "illuminate/contracts": "^10.0|^11.0",
+        "illuminate/filesystem": "^10.0|^11.0",
+        "illuminate/redis": "^10.0|^11.0",
+        "illuminate/queue": "^10.0|^11.0",
+        "illuminate/events": "^10.0|^11.0",
+        "illuminate/console": "^10.0|^11.0",
+        "illuminate/database": "^10.0|^11.0",
+        "overtrue/http": "^1.2",
+        "psr/container": "^1.0 || ^2.0",
+        "psr/event-dispatcher": "^1.0",
+        "ramsey/uuid": "*"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.0",
+        "mockery/mockery": "^1.0",
+        "phpstan/phpstan": "^1.0",
+        "phpunit/phpunit": ">=9.0"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "BusinessG\\LaravelExcel\\ExcelServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "test": "phpunit -c phpunit.xml --colors=always",
+        "analyse": "phpstan analyse --memory-limit 1024M -l 0 ./src",
+        "cs-fix": "php-cs-fixer fix $1"
+    }
+}

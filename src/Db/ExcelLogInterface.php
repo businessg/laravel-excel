@@ -1,0 +1,14 @@
+<?php
+
+declare(strict_types=1);
+
+namespace BusinessG\LaravelExcel\Db;
+
+use BusinessG\LaravelExcel\Data\BaseConfig;
+
+interface ExcelLogInterface
+{
+    public function saveLog(BaseConfig $config, array $saveParam = []): int;
+
+    public function getConfig(): array;
+}
