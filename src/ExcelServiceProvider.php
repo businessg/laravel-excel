@@ -18,7 +18,7 @@ use BusinessG\LaravelExcel\Logger\ExcelLogger;
 use BusinessG\LaravelExcel\Logger\ExcelLoggerInterface;
 use BusinessG\LaravelExcel\Progress\Progress;
 use BusinessG\LaravelExcel\Progress\ProgressInterface;
-use BusinessG\LaravelExcel\Queue\ExcelQueue;
+use BusinessG\LaravelExcel\Queue\AsyncQueue\ExcelQueue;
 use BusinessG\LaravelExcel\Queue\ExcelQueueInterface;
 use BusinessG\LaravelExcel\Strategy\Path\DateTimeExportPathStrategy;
 use BusinessG\LaravelExcel\Strategy\Path\ExportPathStrategyInterface;
@@ -32,10 +32,6 @@ class ExcelServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/../publish/excel.php', 'excel');
 
-        $this->app->bind(
-            \Psr\EventDispatcher\EventDispatcherInterface::class,
-            \Illuminate\Contracts\Events\Dispatcher::class
-        );
 
         $this->app->bind(DriverInterface::class, function ($app) {
             return $app->call(ExcelInvoker::class);

@@ -20,18 +20,18 @@ use BusinessG\LaravelExcel\Progress\ProgressInterface;
 use BusinessG\LaravelExcel\Progress\ProgressRecord;
 use BusinessG\LaravelExcel\Queue\ExcelQueueInterface;
 use BusinessG\LaravelExcel\Strategy\Token\TokenStrategyInterface;
+use Illuminate\Contracts\Events\Dispatcher as EventsDispatcher;
 use Psr\Container\ContainerInterface;
-use Psr\EventDispatcher\EventDispatcherInterface;
 
 class Excel implements ExcelInterface
 {
-    public EventDispatcherInterface $event;
+    public EventsDispatcher $event;
     protected array $config;
 
     public function __construct(protected ContainerInterface $container, protected ProgressInterface $progress)
     {
         $this->config = config('excel', []);
-        $this->event = $container->get(EventDispatcherInterface::class);
+        $this->event = $container->get(EventsDispatcher::class);
     }
 
     public function export(ExportConfig $config): ExportData

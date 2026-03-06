@@ -178,7 +178,7 @@ class Progress implements ProgressInterface
         redis.call('EXPIRE', KEYS[1], ARGV[2])
         return 1
 LUA;
-        $this->redis->eval($luaScript, [$key, $value, (string) $expire], 1);
+        $this->redis->eval($luaScript, 1, $key, $value, (string) $expire);
     }
 
     protected function set(string $token, ProgressRecord $progressRecord)

@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel\Data\Export;
 
-use Psr\Http\Message\ResponseInterface;
 use BusinessG\LaravelExcel\Data\BaseObject;
 
 class ExportData extends BaseObject
 {
-    public ResponseInterface|string $response = '';
+    /** @var \Psr\Http\Message\ResponseInterface|\Symfony\Component\HttpFoundation\Response|string */
+    public $response = '';
 
     public string $token = '';
 
     /**
-     * @return ResponseInterface|string
+     * @return \Psr\Http\Message\ResponseInterface|\Symfony\Component\HttpFoundation\Response|string
      */
-    public function getResponse(): string|ResponseInterface
+    public function getResponse(): mixed
     {
         return $this->response;
     }

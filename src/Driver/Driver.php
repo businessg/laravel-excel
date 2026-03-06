@@ -22,21 +22,21 @@ use BusinessG\LaravelExcel\Event\Error;
 use BusinessG\LaravelExcel\Exception\ExcelException;
 use BusinessG\LaravelExcel\Helper\Helper;
 use BusinessG\LaravelExcel\Strategy\Path\ExportPathStrategyInterface;
-use League\Flysystem\FilesystemOperator;
+use Illuminate\Contracts\Events\Dispatcher as EventsDispatcher;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 abstract class Driver implements DriverInterface
 {
-    public EventDispatcherInterface $event;
-    public FilesystemOperator $filesystem;
+    public EventsDispatcher $event;
+    public Filesystem $filesystem;
 
     public function __construct(protected ContainerInterface $container, protected array $config, protected string $name)
     {
-        $this->event = $container->get(EventDispatcherInterface::class);
+        $this->event = $container->get(EventsDispatcher::class);
         $storage = $this->config['filesystem']['storage'] ?? 'local';
         $this->filesystem = \Illuminate\Support\Facades\Storage::disk($storage);
     }
