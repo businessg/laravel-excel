@@ -208,10 +208,54 @@ class ProgressListener extends BaseListener
          * @var AfterImport $event
          */
         $record = $this->progress->getRecord($event->config);
+        if ($record->progress->status === ProgressData::PROGRESS_STATUS_FAIL) {
+            return;
+        }
         $data = $event->data ?: $record->data;
         $this->progress->setProgress($event->config, new ProgressData([
             'status' => ProgressData::PROGRESS_STATUS_COMPLETE,
         ]), $data);
+    }
+
+    function beforePreCheck(object $event)
+    {
+    }
+
+    function beforePreCheckData(object $event)
+    {
+    }
+
+    function beforePreCheckSheet(object $event)
+    {
+    }
+
+    function afterPreCheck(object $event)
+    {
+    }
+
+    function afterPreCheckData(object $event)
+    {
+        /**
+         * @var \BusinessG\LaravelExcel\Event\AfterPreCheckData $event
+         */
+        if (!$event->exception) {
+            return;
+        }
+        $token = $event->config->getToken();
+        if (empty($token) || !$event->config->getIsProgress()) {
+            return;
+        }
+        $param = $event->importCallbackParam;
+        $msg = sprintf('[%s] Row %d: %s',
+            $param->sheet->name ?? '',
+            ($param->rowIndex + 1) + ($param->sheet->headerIndex ?? 0),
+            $event->exception->getMessage()
+        );
+        $this->progress->pushMessage($token, $msg);
+    }
+
+    function afterPreCheckSheet(object $event)
+    {
     }
 
     function error(object $event)

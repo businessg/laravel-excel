@@ -86,6 +86,9 @@ class Progress implements ProgressInterface
         $progressRecord = $this->getRecord($config);
         $sheetProgress = $progressRecord->getProgressBySheet($sheetName);
         $sheetProgress->status = $progressData->status;
+        if (!empty($progressData->message)) {
+            $sheetProgress->message = $progressData->message;
+        }
         if ($progressData->total > 0) {
             $sheetProgress->total = $progressData->total;
         }

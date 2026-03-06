@@ -18,10 +18,16 @@ use BusinessG\LaravelExcel\Event\BeforeExportData;
 use BusinessG\LaravelExcel\Event\BeforeExportExcel;
 use BusinessG\LaravelExcel\Event\BeforeExportOutput;
 use BusinessG\LaravelExcel\Event\BeforeExportSheet;
+use BusinessG\LaravelExcel\Event\AfterPreCheck;
+use BusinessG\LaravelExcel\Event\AfterPreCheckData;
+use BusinessG\LaravelExcel\Event\AfterPreCheckSheet;
 use BusinessG\LaravelExcel\Event\BeforeImport;
 use BusinessG\LaravelExcel\Event\BeforeImportData;
 use BusinessG\LaravelExcel\Event\BeforeImportExcel;
 use BusinessG\LaravelExcel\Event\BeforeImportSheet;
+use BusinessG\LaravelExcel\Event\BeforePreCheck;
+use BusinessG\LaravelExcel\Event\BeforePreCheckData;
+use BusinessG\LaravelExcel\Event\BeforePreCheckSheet;
 use BusinessG\LaravelExcel\Event\Error;
 use BusinessG\LaravelExcel\Logger\ExcelLoggerInterface;
 use Psr\Container\ContainerInterface;
@@ -65,6 +71,13 @@ abstract class BaseListener
             AfterImportData::class,
             AfterImportExcel::class,
             AfterImportSheet::class,
+
+            BeforePreCheck::class,
+            BeforePreCheckData::class,
+            BeforePreCheckSheet::class,
+            AfterPreCheck::class,
+            AfterPreCheckData::class,
+            AfterPreCheckSheet::class,
 
             Error::class,
         ];
@@ -116,6 +129,18 @@ abstract class BaseListener
     abstract function afterImportExcel(object $event);
 
     abstract function afterImportSheet(object $event);
+
+    abstract function beforePreCheck(object $event);
+
+    abstract function beforePreCheckData(object $event);
+
+    abstract function beforePreCheckSheet(object $event);
+
+    abstract function afterPreCheck(object $event);
+
+    abstract function afterPreCheckData(object $event);
+
+    abstract function afterPreCheckSheet(object $event);
 
     abstract function error(object $event);
 }

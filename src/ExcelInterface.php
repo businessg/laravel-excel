@@ -8,6 +8,7 @@ use BusinessG\LaravelExcel\Data\Export\ExportConfig;
 use BusinessG\LaravelExcel\Data\Export\ExportData;
 use BusinessG\LaravelExcel\Data\Import\ImportConfig;
 use BusinessG\LaravelExcel\Data\Import\ImportData;
+use BusinessG\LaravelExcel\Data\Import\ImportPreCheckData;
 use BusinessG\LaravelExcel\Driver\DriverInterface;
 use BusinessG\LaravelExcel\Progress\ProgressRecord;
 
@@ -16,6 +17,8 @@ interface ExcelInterface
     public function export(ExportConfig $config): ExportData;
 
     public function import(ImportConfig $config): ImportData;
+
+    public function importPreCheck(ImportConfig $config): ImportPreCheckData;
 
     public function getProgressRecord(string $token): ?ProgressRecord;
 

@@ -10,6 +10,7 @@ use BusinessG\LaravelExcel\Data\Export\ExportConfig;
 use BusinessG\LaravelExcel\Data\Export\SheetStyle;
 use BusinessG\LaravelExcel\Data\Export\Style;
 use BusinessG\LaravelExcel\Data\Import\ImportConfig;
+use BusinessG\LaravelExcel\Data\Import\ImportPreCheckData;
 use BusinessG\LaravelExcel\Data\Export\Sheet as ExportSheet;
 use BusinessG\LaravelExcel\Data\Import\Sheet as ImportSheet;
 use BusinessG\LaravelExcel\Event\AfterExportExcel;
@@ -18,8 +19,10 @@ use BusinessG\LaravelExcel\Event\AfterImportExcel;
 use BusinessG\LaravelExcel\Event\AfterImportSheet;
 use BusinessG\LaravelExcel\Event\BeforeExportExcel;
 use BusinessG\LaravelExcel\Event\BeforeExportSheet;
+use BusinessG\LaravelExcel\Event\AfterPreCheckSheet;
 use BusinessG\LaravelExcel\Event\BeforeImportExcel;
 use BusinessG\LaravelExcel\Event\BeforeImportSheet;
+use BusinessG\LaravelExcel\Event\BeforePreCheckSheet;
 use BusinessG\LaravelExcel\Exception\ExcelException;
 use BusinessG\LaravelExcel\Helper\Helper;
 use Vtiful\Kernel\Excel;
@@ -55,6 +58,113 @@ class XlsWriterDriver extends Driver
         $this->event->dispatch(new AfterExportExcel($config, $this));
 
         return $filePath;
+    }
+
+    public function importExcelPreCheck(ImportConfig $config): ImportPreCheckData
+    {
+        $excel = new Excel(['path' => $this->getTempDir()]);
+        $filePath = $config->getTempPath();
+        $fileName = basename($filePath);
+        $this->checkFile($filePath);
+
+        $sheets = $config->getSheets();
+        $excel->openFile($fileName);
+        $sheetList = $excel->sheetList();
+
+        $sheets = array_map(function ($sheet) use ($sheetList) {
+            if ($sheet->readType == ImportSheet::SHEET_READ_TYPE_INDEX) {
+                $sheet->name = $sheetList[$sheet->index] ?? $sheet->name;
+            }
+            return $sheet;
+        }, $sheets);
+
+        $result = new ImportPreCheckData();
+        foreach ($sheets as $sheet) {
+            if (!in_array($sheet->name, $sheetList)) {
+                continue;
+            }
+            $this->preCheckSheet($excel, $sheet, $config, $result);
+            if ($result->terminated) {
+                break;
+            }
+        }
+
+        $excel->close();
+        $result->passed = $result->invalidRows === 0;
+
+        return $result;
+    }
+
+    protected function preCheckSheet(Excel $excel, ImportSheet $sheet, ImportConfig $config, ImportPreCheckData $result): void
+    {
+        $sheetName = $sheet->name;
+
+        $this->event->dispatch(new BeforePreCheckSheet($config, $this, $sheet));
+
+        $excel->openSheet($sheetName);
+
+        $header = [];
+        if ($sheet->headerIndex > 0) {
+            if ($sheet->headerIndex > 1) {
+                $excel->setSkipRows($sheet->headerIndex - 1);
+            }
+            $header = $excel->nextRow();
+            $sheet->validateHeader($header);
+        }
+
+        $columnTypes = $sheet->getColumnTypes($header ?? []);
+        $preCheckCallback = $sheet->preCheckCallback;
+        $sampleLimit = $config->preCheckSampleLimit;
+
+        if (!$header) {
+            $this->event->dispatch(new AfterPreCheckSheet($config, $this, $sheet));
+            return;
+        }
+
+        $rowIndex = 0;
+        $sampleCollected = 0;
+
+        while (null !== $row = $excel->nextRow($columnTypes)) {
+            $rowIndex++;
+            $formattedRow = $header ? $sheet->formatRowByHeader($row, $header) : $row;
+
+            $rowErrors = [];
+            if (is_callable($preCheckCallback)) {
+                try {
+                    if (!$this->invokePreCheckCallback($preCheckCallback, $config, $sheet, $formattedRow, $rowIndex - 1)) {
+                        $result->terminated = true;
+                        break;
+                    }
+                } catch (\Throwable $e) {
+                    $rowErrors = [$e->getMessage()];
+                }
+            }
+
+            $result->totalRows++;
+
+            if (!empty($rowErrors)) {
+                $result->invalidRows++;
+                $result->errors[] = [
+                    'sheetName' => $sheetName,
+                    'rowIndex' => $rowIndex + ($sheet->headerIndex > 0 ? $sheet->headerIndex : 0),
+                    'row' => $formattedRow,
+                    'errors' => $rowErrors,
+                ];
+            } else {
+                $result->validRows++;
+            }
+
+            if ($sampleLimit > 0 && $sampleCollected < $sampleLimit) {
+                $result->sampleData[] = [
+                    'sheetName' => $sheetName,
+                    'rowIndex' => $rowIndex + ($sheet->headerIndex > 0 ? $sheet->headerIndex : 0),
+                    'row' => $formattedRow,
+                ];
+                $sampleCollected++;
+            }
+        }
+
+        $this->event->dispatch(new AfterPreCheckSheet($config, $this, $sheet));
     }
 
     /**

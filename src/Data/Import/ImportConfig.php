@@ -14,6 +14,12 @@ class ImportConfig extends BaseConfig
      * @var bool
      */
     public bool $isReturnSheetData = false;
+
+    /**
+     * 预检时预览数据行数（0 表示不返回预览）
+     */
+    public int $preCheckSampleLimit = 0;
+
     /**
      * 导入地址
      *

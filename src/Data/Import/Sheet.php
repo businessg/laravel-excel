@@ -85,6 +85,13 @@ class Sheet extends BaseObject
     public $callback;
 
     /**
+     * 预检回调（预检时执行，与 callback 独立）
+     * 第二个参数 bool &$terminate 为引用，设为 true 可终止预检
+     * @var callable|null
+     */
+    public $preCheckCallback = null;
+
+    /**
      * 获取name
      *
      * @return string

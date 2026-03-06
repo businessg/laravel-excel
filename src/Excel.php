@@ -7,12 +7,15 @@ use BusinessG\LaravelExcel\Data\Export\ExportConfig;
 use BusinessG\LaravelExcel\Data\Export\ExportData;
 use BusinessG\LaravelExcel\Data\Import\ImportConfig;
 use BusinessG\LaravelExcel\Data\Import\ImportData;
+use BusinessG\LaravelExcel\Data\Import\ImportPreCheckData;
 use BusinessG\LaravelExcel\Driver\DriverFactory;
 use BusinessG\LaravelExcel\Driver\DriverInterface;
 use BusinessG\LaravelExcel\Event\AfterExport;
 use BusinessG\LaravelExcel\Event\AfterImport;
 use BusinessG\LaravelExcel\Event\BeforeExport;
+use BusinessG\LaravelExcel\Event\AfterPreCheck;
 use BusinessG\LaravelExcel\Event\BeforeImport;
+use BusinessG\LaravelExcel\Event\BeforePreCheck;
 use BusinessG\LaravelExcel\Event\Error;
 use BusinessG\LaravelExcel\Exception\ExcelException;
 use BusinessG\LaravelExcel\Progress\ProgressData;
@@ -93,6 +96,24 @@ class Excel implements ExcelInterface
 
             return $importData;
 
+        } catch (ExcelException $exception) {
+            $this->event->dispatch(new Error($config, $driver, $exception));
+            throw $exception;
+        } catch (\Throwable $throwable) {
+            $this->event->dispatch(new Error($config, $driver, $throwable));
+            throw $throwable;
+        }
+    }
+
+    public function importPreCheck(ImportConfig $config): ImportPreCheckData
+    {
+        $driver = $this->getDriver($config->getDriverName());
+
+        try {
+            $this->event->dispatch(new BeforePreCheck($config, $driver));
+            $result = $driver->importPreCheck($config);
+            $this->event->dispatch(new AfterPreCheck($config, $driver, $result));
+            return $result;
         } catch (ExcelException $exception) {
             $this->event->dispatch(new Error($config, $driver, $exception));
             throw $exception;

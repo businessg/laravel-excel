@@ -8,6 +8,7 @@ use BusinessG\LaravelExcel\Data\Export\ExportConfig;
 use BusinessG\LaravelExcel\Data\Export\ExportData;
 use BusinessG\LaravelExcel\Data\Import\ImportConfig;
 use BusinessG\LaravelExcel\Data\Import\ImportData;
+use BusinessG\LaravelExcel\Data\Import\ImportPreCheckData;
 use BusinessG\LaravelExcel\Progress\ProgressRecord;
 use RuntimeException;
 
@@ -30,6 +31,16 @@ function excel_import(ImportConfig $config): ImportData
         throw new RuntimeException('ExcelInterface is missing in container.');
     }
     return $container->get(ExcelInterface::class)->import($config);
+}
+
+function excel_import_precheck(ImportConfig $config): ImportPreCheckData
+{
+    $container = app();
+
+    if (!$container->has(ExcelInterface::class)) {
+        throw new RuntimeException('ExcelInterface is missing in container.');
+    }
+    return $container->get(ExcelInterface::class)->importPreCheck($config);
 }
 
 function excel_progress_pop_message(string $token, int $num = 50, bool &$isEnd = true): array

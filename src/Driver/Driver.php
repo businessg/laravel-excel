@@ -10,6 +10,7 @@ use BusinessG\LaravelExcel\Data\Export\ExportData;
 use BusinessG\LaravelExcel\Data\Export\Sheet as ExportSheet;
 use BusinessG\LaravelExcel\Data\Import\ImportConfig;
 use BusinessG\LaravelExcel\Data\Import\ImportData;
+use BusinessG\LaravelExcel\Data\Import\ImportPreCheckData;
 use BusinessG\LaravelExcel\Data\Import\ImportRowCallbackParam;
 use BusinessG\LaravelExcel\Data\Import\Sheet as ImportSheet;
 use BusinessG\LaravelExcel\Event\AfterExportData;
@@ -17,10 +18,14 @@ use BusinessG\LaravelExcel\Event\AfterExportOutput;
 use BusinessG\LaravelExcel\Event\AfterImportData;
 use BusinessG\LaravelExcel\Event\BeforeExportData;
 use BusinessG\LaravelExcel\Event\BeforeExportOutput;
+use BusinessG\LaravelExcel\Event\AfterPreCheck;
+use BusinessG\LaravelExcel\Event\AfterPreCheckData;
 use BusinessG\LaravelExcel\Event\BeforeImportData;
 use BusinessG\LaravelExcel\Event\Error;
 use BusinessG\LaravelExcel\Exception\ExcelException;
 use BusinessG\LaravelExcel\Helper\Helper;
+use BusinessG\LaravelExcel\Progress\ProgressData;
+use BusinessG\LaravelExcel\Progress\ProgressInterface;
 use BusinessG\LaravelExcel\Strategy\Path\ExportPathStrategyInterface;
 use Illuminate\Contracts\Events\Dispatcher as EventsDispatcher;
 use Illuminate\Contracts\Filesystem\Filesystem;
@@ -69,27 +74,75 @@ abstract class Driver implements DriverInterface
     public function import(ImportConfig $config): importData
     {
         try {
-
             $importData = new ImportData(['token' => $config->getToken()]);
-
             $config->setTempPath($this->fileToTemp($config->getPath()));
+
+            // 预检先行：若有 preCheckCallback 则先预检
+            if ($this->shouldRunPreCheckBeforeImport($config)) {
+                $preCheckResult = $this->importExcelPreCheck($config);
+                $this->event->dispatch(new AfterPreCheck($config, $this, $preCheckResult));
+                if ($preCheckResult->invalidRows > 0 || $preCheckResult->terminated) {
+                    $this->setImportProgressFail($config, '预检失败', $preCheckResult);
+                    Helper::deleteFile($config->getTempPath());
+                    return $importData;
+                }
+            }
 
             $importData->sheetData = $this->importExcel($config);
 
-            // 删除临时文件
             Helper::deleteFile($config->getTempPath());
-
         } catch (ExcelException $exception) {
-
             $this->event->dispatch(new Error($config, $this, $exception));
             throw $exception;
         } catch (\Throwable $throwable) {
-
             $this->event->dispatch(new Error($config, $this, $throwable));
             throw $throwable;
         }
 
         return $importData;
+    }
+
+    protected function shouldRunPreCheckBeforeImport(ImportConfig $config): bool
+    {
+        foreach ($config->getSheets() as $sheet) {
+            if (is_callable($sheet->preCheckCallback ?? null)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected function setImportProgressFail(ImportConfig $config, string $message, ?ImportPreCheckData $preCheckResult = null): void
+    {
+        if (!$config->getIsProgress()) {
+            return;
+        }
+        $progress = $this->container->get(ProgressInterface::class);
+        foreach ($config->getSheets() as $sheet) {
+            $sheetMessage = $this->buildSheetPreCheckFailMessage($sheet->name, $message, $preCheckResult);
+            $progress->setSheetProgress($config, $sheet->name, new ProgressData([
+                'status' => ProgressData::PROGRESS_STATUS_FAIL,
+                'message' => $sheetMessage,
+            ]));
+        }
+        $progress->setProgress($config, new ProgressData([
+            'status' => ProgressData::PROGRESS_STATUS_FAIL,
+            'message' => $message,
+        ]));
+        $progress->pushMessage($config->getToken(), $message);
+    }
+
+    protected function buildSheetPreCheckFailMessage(string $sheetName, string $baseMessage, ?ImportPreCheckData $preCheckResult): string
+    {
+        if (!$preCheckResult || empty($preCheckResult->errors)) {
+            return $baseMessage;
+        }
+        $sheetErrors = array_filter($preCheckResult->errors, fn($e) => ($e['sheetName'] ?? '') === $sheetName);
+        if (empty($sheetErrors)) {
+            return $baseMessage;
+        }
+        $details = array_map(fn($e) => sprintf('Row %d: %s', $e['rowIndex'] ?? 0, implode('; ', $e['errors'] ?? [])), $sheetErrors);
+        return $baseMessage . ': ' . implode('; ', $details);
     }
 
     /**
@@ -233,7 +286,7 @@ abstract class Driver implements DriverInterface
     protected function importRowCallback(callable $callback, ImportConfig $config, ImportSheet $sheet, array $row, int $rowIndex)
     {
         $importRowCallbackParam = new ImportRowCallbackParam([
-            'excel' => $this,
+            'driver' => $this,
             'sheet' => $sheet,
             'config' => $config,
             'row' => $row,
@@ -241,14 +294,42 @@ abstract class Driver implements DriverInterface
         ]);
 
         $this->event->dispatch(new BeforeImportData($config, $this, $importRowCallbackParam));
+        $exception = null;
         try {
             $result = call_user_func($callback, $importRowCallbackParam);
         } catch (\Throwable $throwable) {
             $exception = $throwable;
         }
-        $this->event->dispatch(new AfterImportData($config, $this, $importRowCallbackParam, $exception ?? null));
+        $this->event->dispatch(new AfterImportData($config, $this, $importRowCallbackParam, $exception));
 
         return $result ?? null;
+    }
+
+    protected function invokePreCheckCallback(callable $callback, ImportConfig $config, ImportSheet $sheet, array $row, int $rowIndex): bool
+    {
+        $param = new ImportRowCallbackParam([
+            'driver' => $this,
+            'sheet' => $sheet,
+            'config' => $config,
+            'row' => $row,
+            'rowIndex' => $rowIndex,
+        ]);
+
+        $this->event->dispatch(new \BusinessG\LaravelExcel\Event\BeforePreCheckData($config, $this, $param));
+        $exception = null;
+        $terminate = false;
+        try {
+            $args = [$param, &$terminate];
+            call_user_func_array($callback, $args);
+        } catch (\Throwable $throwable) {
+            $exception = $throwable;
+        }
+        $this->event->dispatch(new AfterPreCheckData($config, $this, $param, $exception));
+
+        if ($exception) {
+            throw $exception;
+        }
+        return !$terminate;
     }
 
     /**
@@ -337,4 +418,22 @@ abstract class Driver implements DriverInterface
     abstract function exportExcel(ExportConfig $config, string $filePath): string;
 
     abstract function importExcel(ImportConfig $config): array|null;
+
+    abstract function importExcelPreCheck(ImportConfig $config): ImportPreCheckData;
+
+    public function importPreCheck(ImportConfig $config): ImportPreCheckData
+    {
+        $config->setTempPath($this->fileToTemp($config->getPath()));
+        try {
+            $result = $this->importExcelPreCheck($config);
+            Helper::deleteFile($config->getTempPath());
+            return $result;
+        } catch (ExcelException $exception) {
+            Helper::deleteFile($config->getTempPath());
+            throw $exception;
+        } catch (\Throwable $throwable) {
+            Helper::deleteFile($config->getTempPath());
+            throw $throwable;
+        }
+    }
 }

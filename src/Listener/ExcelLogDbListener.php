@@ -143,6 +143,30 @@ class ExcelLogDbListener extends BaseListener
         $this->excelLog->saveLog($event->config);
     }
 
+    function beforePreCheck(object $event)
+    {
+    }
+
+    function beforePreCheckData(object $event)
+    {
+    }
+
+    function beforePreCheckSheet(object $event)
+    {
+    }
+
+    function afterPreCheck(object $event)
+    {
+    }
+
+    function afterPreCheckData(object $event)
+    {
+    }
+
+    function afterPreCheckSheet(object $event)
+    {
+    }
+
     function error(object $event)
     {
         /**
