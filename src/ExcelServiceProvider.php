@@ -13,7 +13,9 @@ use BusinessG\LaravelExcel\Db\ExcelLogInterface;
 use BusinessG\LaravelExcel\Db\ExcelLogManager;
 use BusinessG\LaravelExcel\Driver\DriverFactory;
 use BusinessG\BaseExcel\Driver\DriverInterface;
+use BusinessG\BaseExcel\Progress\Progress;
 use BusinessG\BaseExcel\Progress\ProgressInterface;
+use BusinessG\BaseExcel\Progress\ProgressStorageInterface;
 use BusinessG\BaseExcel\Queue\ExcelQueueInterface;
 use BusinessG\BaseExcel\Strategy\Path\ExportPathStrategyInterface;
 use BusinessG\BaseExcel\Strategy\Path\DateTimeExportPathStrategy;
@@ -28,7 +30,7 @@ use BusinessG\LaravelExcel\Listener\ExcelLogDbListener;
 use BusinessG\LaravelExcel\Listener\ProgressListener;
 use BusinessG\LaravelExcel\Logger\ExcelLogger;
 use BusinessG\LaravelExcel\Logger\ExcelLoggerInterface;
-use BusinessG\LaravelExcel\Progress\Progress;
+use BusinessG\LaravelExcel\Progress\LaravelProgressStorage;
 use BusinessG\LaravelExcel\Queue\AsyncQueue\ExcelQueue;
 use Illuminate\Support\ServiceProvider;
 
@@ -43,7 +45,16 @@ class ExcelServiceProvider extends ServiceProvider
         $this->app->bind(DriverInterface::class, function ($app) {
             return $app->call(ExcelInvoker::class);
         });
-        $this->app->singleton(ProgressInterface::class, Progress::class);
+        $this->app->singleton(ProgressStorageInterface::class, LaravelProgressStorage::class);
+        $this->app->singleton(ProgressInterface::class, function ($app) {
+            $config = config('excel.progress', [
+                'enable' => true,
+                'prefix' => 'LaravelExcel',
+                'expire' => 3600,
+            ]);
+            $storage = $app->make(ProgressStorageInterface::class);
+            return new Progress($storage, $config);
+        });
         $this->app->singleton(ExcelLogInterface::class, ExcelLogManager::class);
         $this->app->singleton(ExcelInterface::class, Excel::class);
         $this->app->alias(ExcelInterface::class, \BusinessG\BaseExcel\ExcelInterface::class);
