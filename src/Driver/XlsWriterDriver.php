@@ -130,13 +130,13 @@ class XlsWriterDriver extends Driver
 
             $rowErrors = [];
             if (is_callable($preCheckCallback)) {
-                try {
-                    if (!$this->invokePreCheckCallback($preCheckCallback, $config, $sheet, $formattedRow, $rowIndex - 1)) {
-                        $result->terminated = true;
-                        break;
-                    }
-                } catch (\Throwable $e) {
-                    $rowErrors = [$e->getMessage()];
+                [$shouldContinue, $exception] = $this->invokePreCheckCallback($preCheckCallback, $config, $sheet, $formattedRow, $rowIndex - 1);
+                if (!$shouldContinue) {
+                    $result->terminated = true;
+                    break;
+                }
+                if ($exception) {
+                    $rowErrors = [$exception->getMessage()];
                 }
             }
 

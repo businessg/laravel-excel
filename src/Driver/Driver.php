@@ -305,7 +305,12 @@ abstract class Driver implements DriverInterface
         return $result ?? null;
     }
 
-    protected function invokePreCheckCallback(callable $callback, ImportConfig $config, ImportSheet $sheet, array $row, int $rowIndex): bool
+    /**
+     * 执行预检回调
+     *
+     * @return array{0: bool, 1: ?\Throwable} [shouldContinue, exception] 当 exception 非空时表示有错误
+     */
+    protected function invokePreCheckCallback(callable $callback, ImportConfig $config, ImportSheet $sheet, array $row, int $rowIndex): array
     {
         $param = new ImportRowCallbackParam([
             'driver' => $this,
@@ -319,17 +324,13 @@ abstract class Driver implements DriverInterface
         $exception = null;
         $terminate = false;
         try {
-            $args = [$param, &$terminate];
-            call_user_func_array($callback, $args);
+            $callback($param, $terminate);
         } catch (\Throwable $throwable) {
             $exception = $throwable;
         }
         $this->event->dispatch(new AfterPreCheckData($config, $this, $param, $exception));
 
-        if ($exception) {
-            throw $exception;
-        }
-        return !$terminate;
+        return [!$terminate, $exception];
     }
 
     /**
