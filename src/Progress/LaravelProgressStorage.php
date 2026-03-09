@@ -43,4 +43,10 @@ class LaravelProgressStorage extends AbstractProgressStorage
         $value = $this->redis->rPop($key);
         return $value !== null ? (string) $value : null;
     }
+
+    public function lrange(string $key, int $start, int $stop): array
+    {
+        $result = $this->redis->lRange($key, $start, $stop);
+        return $result !== null ? array_map('strval', $result) : [];
+    }
 }

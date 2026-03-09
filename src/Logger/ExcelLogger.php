@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel\Logger;
 
+use BusinessG\BaseExcel\Logger\ExcelLoggerInterface;
 use Illuminate\Support\Facades\Log;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;

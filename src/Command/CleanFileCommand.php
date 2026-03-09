@@ -6,7 +6,7 @@ namespace BusinessG\LaravelExcel\Command;
 
 use BusinessG\LaravelExcel\Driver\DriverFactory;
 use BusinessG\BaseExcel\Helper\Helper;
-use BusinessG\LaravelExcel\Logger\ExcelLoggerInterface;
+use BusinessG\BaseExcel\Logger\ExcelLoggerInterface;
 use Illuminate\Console\Command;
 
 class CleanFileCommand extends Command
@@ -47,29 +47,6 @@ class CleanFileCommand extends Command
     protected function cleanTempFile(string $directory, array $configs): array
     {
         $maxAgeSeconds = $configs['cleanTempFile']['time'] ?? 1800;
-        $deletedFiles = [];
-        $currentTime = time();
-
-        $files = scandir($directory);
-
-        foreach ($files as $file) {
-            if ($file === '.' || $file === '..') {
-                continue;
-            }
-
-            $filePath = $directory . DIRECTORY_SEPARATOR . $file;
-
-            if (is_file($filePath)) {
-                $fileTime = filemtime($filePath);
-                $ageSeconds = $currentTime - $fileTime;
-
-                if ($ageSeconds > $maxAgeSeconds) {
-                    if (Helper::deleteFile($filePath)) {
-                        $deletedFiles[] = $filePath;
-                    }
-                }
-            }
-        }
-        return $deletedFiles;
+        return Helper::cleanTempDirectory($directory, $maxAgeSeconds);
     }
 }

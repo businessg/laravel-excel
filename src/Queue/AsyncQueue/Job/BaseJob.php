@@ -7,7 +7,7 @@ namespace BusinessG\LaravelExcel\Queue\AsyncQueue\Job;
 use BusinessG\BaseExcel\Data\BaseConfig;
 use BusinessG\LaravelExcel\Driver\DriverFactory;
 use BusinessG\BaseExcel\Event\Error;
-use BusinessG\LaravelExcel\ExcelInterface;
+use BusinessG\BaseExcel\ExcelInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

@@ -8,6 +8,7 @@ use BusinessG\BaseExcel\Data\Export\ExportConfig;
 use BusinessG\BaseExcel\Data\Export\ExportData;
 use BusinessG\BaseExcel\Data\Import\ImportConfig;
 use BusinessG\BaseExcel\Data\Import\ImportData;
+use BusinessG\BaseExcel\ExcelInterface;
 use BusinessG\BaseExcel\Progress\ProgressRecord;
 use RuntimeException;
 

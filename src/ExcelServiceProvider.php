@@ -9,13 +9,14 @@ use BusinessG\LaravelExcel\Command\ExportCommand;
 use BusinessG\LaravelExcel\Command\ImportCommand;
 use BusinessG\LaravelExcel\Command\MessageCommand;
 use BusinessG\LaravelExcel\Command\ProgressCommand;
-use BusinessG\LaravelExcel\Db\ExcelLogInterface;
+use BusinessG\BaseExcel\Db\ExcelLogInterface;
 use BusinessG\LaravelExcel\Db\ExcelLogManager;
 use BusinessG\LaravelExcel\Driver\DriverFactory;
 use BusinessG\BaseExcel\Driver\DriverInterface;
 use BusinessG\BaseExcel\Progress\Progress;
 use BusinessG\BaseExcel\Progress\ProgressInterface;
 use BusinessG\BaseExcel\Progress\ProgressStorageInterface;
+use BusinessG\BaseExcel\ExcelInterface;
 use BusinessG\BaseExcel\Queue\ExcelQueueInterface;
 use BusinessG\BaseExcel\Strategy\Path\ExportPathStrategyInterface;
 use BusinessG\BaseExcel\Strategy\Path\DateTimeExportPathStrategy;
@@ -26,10 +27,8 @@ use BusinessG\BaseExcel\Console\ImportCommandHandler;
 use BusinessG\BaseExcel\Console\MessageCommandHandler;
 use BusinessG\BaseExcel\Console\ProgressCommandHandler;
 use BusinessG\BaseExcel\Console\ProgressDisplay;
-use BusinessG\LaravelExcel\Listener\ExcelLogDbListener;
-use BusinessG\LaravelExcel\Listener\ProgressListener;
 use BusinessG\LaravelExcel\Logger\ExcelLogger;
-use BusinessG\LaravelExcel\Logger\ExcelLoggerInterface;
+use BusinessG\BaseExcel\Logger\ExcelLoggerInterface;
 use BusinessG\LaravelExcel\Progress\LaravelProgressStorage;
 use BusinessG\LaravelExcel\Queue\AsyncQueue\ExcelQueue;
 use Illuminate\Support\ServiceProvider;
@@ -57,7 +56,6 @@ class ExcelServiceProvider extends ServiceProvider
         });
         $this->app->singleton(ExcelLogInterface::class, ExcelLogManager::class);
         $this->app->singleton(ExcelInterface::class, Excel::class);
-        $this->app->alias(ExcelInterface::class, \BusinessG\BaseExcel\ExcelInterface::class);
         $this->app->singleton(ExcelLoggerInterface::class, ExcelLogger::class);
         $this->app->singleton(ExcelQueueInterface::class, ExcelQueue::class);
         $this->app->singleton(ExportPathStrategyInterface::class, DateTimeExportPathStrategy::class);
@@ -89,12 +87,12 @@ class ExcelServiceProvider extends ServiceProvider
 
         $dispatcher = $this->app->make(\Illuminate\Contracts\Events\Dispatcher::class);
 
-        $progressListener = $this->app->make(ProgressListener::class);
+        $progressListener = $this->app->make(\BusinessG\BaseExcel\Listener\ProgressListener::class);
         foreach ($progressListener->listen() as $eventClass) {
             $dispatcher->listen($eventClass, [$progressListener, 'process']);
         }
 
-        $excelLogDbListener = $this->app->make(ExcelLogDbListener::class);
+        $excelLogDbListener = $this->app->make(\BusinessG\BaseExcel\Listener\ExcelLogDbListener::class);
         foreach ($excelLogDbListener->listen() as $eventClass) {
             $dispatcher->listen($eventClass, [$excelLogDbListener, 'process']);
         }

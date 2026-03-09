@@ -57,7 +57,7 @@ php artisan migrate
 - excel对象
 
 ```php
-$excel = app(\BusinessG\LaravelExcel\ExcelInterface::class);
+$excel = app(\BusinessG\BaseExcel\ExcelInterface::class);
 // 或使用辅助函数
 $exportData = \excel_export(new DemoExportConfig([...]));
 $importData = \excel_import(new DemoImportConfig()->setPath('/d/xxx.xlsx'));
@@ -67,7 +67,7 @@ $importData = \excel_import(new DemoImportConfig()->setPath('/d/xxx.xlsx'));
 
 ```php
 /**
- * @var \BusinessG\LaravelExcel\ExcelInterface $excel 
+ * @var \BusinessG\BaseExcel\ExcelInterface $excel 
  */
 $exportData = $excel->export(new DemoExportConfig([
     // 额外参数
@@ -79,7 +79,7 @@ $exportData = $excel->export(new DemoExportConfig([
 
 ```php
 /**
- * @var \BusinessG\LaravelExcel\ExcelInterface $excel 
+ * @var \BusinessG\BaseExcel\ExcelInterface $excel 
  */
 $importData = $excel->import(new DemoImportConfig()->setPath('/d/xxx.xlsx'));
 ```
@@ -88,7 +88,7 @@ $importData = $excel->import(new DemoImportConfig()->setPath('/d/xxx.xlsx'));
 
 ```php
 /**
- * @var \BusinessG\LaravelExcel\ExcelInterface $excel 
+ * @var \BusinessG\BaseExcel\ExcelInterface $excel 
  * @var \BusinessG\LaravelExcel\Progress\ProgressRecord $progressRecord
  */
 $progressRecord = $excel->getProgressRecord($token);
@@ -98,7 +98,7 @@ $progressRecord = $excel->getProgressRecord($token);
 
 ```php
 /**
- * @var \BusinessG\LaravelExcel\ExcelInterface $excel 
+ * @var \BusinessG\BaseExcel\ExcelInterface $excel 
  */
 $isEnd = false; // 是否结束
 $messages = $excel->popMessageAndIsEnd($token, 50, $isEnd);
