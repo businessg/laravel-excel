@@ -1,10 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace BusinessG\LaravelExcel\Progress;
 
-use BusinessG\LaravelExcel\Data\BaseConfig;
-use BusinessG\LaravelExcel\Data\BaseObject;
-use BusinessG\LaravelExcel\Driver\Driver;
+use BusinessG\BaseExcel\Data\BaseConfig;
+use BusinessG\BaseExcel\Data\BaseObject;
+use BusinessG\BaseExcel\Progress\ProgressData;
+use BusinessG\BaseExcel\Progress\ProgressInterface;
+use BusinessG\BaseExcel\Progress\ProgressRecord;
 use Illuminate\Support\Facades\Redis;
 use Psr\Container\ContainerInterface;
 
@@ -31,7 +35,7 @@ class Progress implements ProgressInterface
      * 初始化配置
      *
      * @param BaseConfig $config
-     * @return ProgressRecord
+     * @return BaseProgressRecord
      */
     public function initRecord(BaseConfig $config): ProgressRecord
     {
@@ -52,7 +56,7 @@ class Progress implements ProgressInterface
      * 获取进度记录
      *
      * @param BaseConfig $config
-     * @return ProgressRecord
+     * @return BaseProgressRecord
      */
     public function getRecord(BaseConfig $config): ProgressRecord
     {
@@ -66,7 +70,7 @@ class Progress implements ProgressInterface
      * 获取进度记录<token>
      *
      * @param string $token
-     * @return ProgressRecord|null
+     * @return BaseProgressRecord|null
      */
     public function getRecordByToken(string $token): ?ProgressRecord
     {
@@ -78,8 +82,8 @@ class Progress implements ProgressInterface
      *
      * @param BaseConfig $config
      * @param string $sheetName
-     * @param ProgressData $progressData
-     * @return ProgressData
+     * @param BaseProgressData $progressData
+     * @return BaseProgressData
      */
     public function setSheetProgress(BaseConfig $config, string $sheetName, ProgressData $progressData): ProgressData
     {
@@ -136,9 +140,13 @@ class Progress implements ProgressInterface
         return $progressRecord;
     }
 
-    public function pushMessage(string $token, string $message)
+    public function pushMessage(string $token, string $message): void
     {
-        $this->lpush($this->getMessageKey($token), $message, intval($this->config['expire'] ?? 3600));
+        $key = $this->getMessageKey($token);
+        $this->lpush($key, $message, intval($this->config['expire'] ?? 3600));
+        if (config('excel.progress.debug_message', false)) {
+            \Illuminate\Support\Facades\Log::debug('[Excel pushMessage]', ['token' => $token, 'key' => $key, 'message' => $message]);
+        }
     }
 
     public function popMessage(string $token, int $num): array
@@ -153,7 +161,22 @@ class Progress implements ProgressInterface
         return $messages;
     }
 
-    protected function setProgressStatus(ProgressRecord $progressRecord)
+    /**
+     * 调试用：读取消息列表（不消费），用于排查「推送失败」还是「获取失败」
+     * 返回 Redis 中该 token 对应的消息数量及前 N 条内容
+     */
+    public function peekMessage(string $token, int $num = 50): array
+    {
+        $key = $this->getMessageKey($token);
+        $list = $this->redis->lRange($key, 0, $num - 1) ?: [];
+        return [
+            'key' => $key,
+            'count' => (int) $this->redis->lLen($key),
+            'messages' => $list,
+        ];
+    }
+
+    protected function setProgressStatus(ProgressRecord $progressRecord): ProgressRecord
     {
         $total = 0;
         $status = array_map(function ($item) use (&$total) {
@@ -173,15 +196,11 @@ class Progress implements ProgressInterface
 
     protected function lpush(string $key, string $value, int $expire)
     {
-        $luaScript = <<<LUA
-        redis.call('LPUSH', KEYS[1], ARGV[1])
-        redis.call('EXPIRE', KEYS[1], ARGV[2])
-        return 1
-LUA;
-        $this->redis->eval($luaScript, 1, $key, $value, (string) $expire);
+        $this->redis->lPush($key, $value);
+        $this->redis->expire($key, $expire);
     }
 
-    protected function set(string $token, ProgressRecord $progressRecord)
+    protected function set(string $token, ProgressRecord $progressRecord): void
     {
         $key = $this->getProgressKey($token);
         $expire = intval($this->config['expire'] ?? 3600);

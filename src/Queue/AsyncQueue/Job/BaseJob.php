@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel\Queue\AsyncQueue\Job;
 
-use BusinessG\LaravelExcel\Data\BaseConfig;
+use BusinessG\BaseExcel\Data\BaseConfig;
 use BusinessG\LaravelExcel\Driver\DriverFactory;
-use BusinessG\LaravelExcel\Event\Error;
+use BusinessG\BaseExcel\Event\Error;
 use BusinessG\LaravelExcel\ExcelInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

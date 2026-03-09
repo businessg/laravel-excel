@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel;
 
-use BusinessG\LaravelExcel\Data\Export\ExportConfig;
-use BusinessG\LaravelExcel\Data\Export\ExportData;
-use BusinessG\LaravelExcel\Data\Import\ImportConfig;
-use BusinessG\LaravelExcel\Data\Import\ImportData;
-use BusinessG\LaravelExcel\Progress\ProgressRecord;
+use BusinessG\BaseExcel\Data\Export\ExportConfig;
+use BusinessG\BaseExcel\Data\Export\ExportData;
+use BusinessG\BaseExcel\Data\Import\ImportConfig;
+use BusinessG\BaseExcel\Data\Import\ImportData;
+use BusinessG\BaseExcel\Progress\ProgressRecord;
 use RuntimeException;
 
 function excel_export(ExportConfig $config): ExportData

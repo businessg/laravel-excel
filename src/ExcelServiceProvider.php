@@ -11,19 +11,25 @@ use BusinessG\LaravelExcel\Command\MessageCommand;
 use BusinessG\LaravelExcel\Command\ProgressCommand;
 use BusinessG\LaravelExcel\Db\ExcelLogInterface;
 use BusinessG\LaravelExcel\Db\ExcelLogManager;
-use BusinessG\LaravelExcel\Driver\DriverInterface;
+use BusinessG\LaravelExcel\Driver\DriverFactory;
+use BusinessG\BaseExcel\Driver\DriverInterface;
+use BusinessG\BaseExcel\Progress\ProgressInterface;
+use BusinessG\BaseExcel\Queue\ExcelQueueInterface;
+use BusinessG\BaseExcel\Strategy\Path\ExportPathStrategyInterface;
+use BusinessG\BaseExcel\Strategy\Path\DateTimeExportPathStrategy;
+use BusinessG\BaseExcel\Strategy\Token\TokenStrategyInterface;
+use BusinessG\BaseExcel\Strategy\Token\UuidStrategy;
+use BusinessG\BaseExcel\Console\ExportCommandHandler;
+use BusinessG\BaseExcel\Console\ImportCommandHandler;
+use BusinessG\BaseExcel\Console\MessageCommandHandler;
+use BusinessG\BaseExcel\Console\ProgressCommandHandler;
+use BusinessG\BaseExcel\Console\ProgressDisplay;
 use BusinessG\LaravelExcel\Listener\ExcelLogDbListener;
 use BusinessG\LaravelExcel\Listener\ProgressListener;
 use BusinessG\LaravelExcel\Logger\ExcelLogger;
 use BusinessG\LaravelExcel\Logger\ExcelLoggerInterface;
 use BusinessG\LaravelExcel\Progress\Progress;
-use BusinessG\LaravelExcel\Progress\ProgressInterface;
 use BusinessG\LaravelExcel\Queue\AsyncQueue\ExcelQueue;
-use BusinessG\LaravelExcel\Queue\ExcelQueueInterface;
-use BusinessG\LaravelExcel\Strategy\Path\DateTimeExportPathStrategy;
-use BusinessG\LaravelExcel\Strategy\Path\ExportPathStrategyInterface;
-use BusinessG\LaravelExcel\Strategy\Token\TokenStrategyInterface;
-use BusinessG\LaravelExcel\Strategy\Token\UuidStrategy;
 use Illuminate\Support\ServiceProvider;
 
 class ExcelServiceProvider extends ServiceProvider
@@ -33,16 +39,23 @@ class ExcelServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__ . '/../publish/excel.php', 'excel');
 
 
+        $this->app->singleton(DriverFactory::class);
         $this->app->bind(DriverInterface::class, function ($app) {
             return $app->call(ExcelInvoker::class);
         });
         $this->app->singleton(ProgressInterface::class, Progress::class);
         $this->app->singleton(ExcelLogInterface::class, ExcelLogManager::class);
         $this->app->singleton(ExcelInterface::class, Excel::class);
+        $this->app->alias(ExcelInterface::class, \BusinessG\BaseExcel\ExcelInterface::class);
         $this->app->singleton(ExcelLoggerInterface::class, ExcelLogger::class);
         $this->app->singleton(ExcelQueueInterface::class, ExcelQueue::class);
         $this->app->singleton(ExportPathStrategyInterface::class, DateTimeExportPathStrategy::class);
         $this->app->singleton(TokenStrategyInterface::class, UuidStrategy::class);
+        $this->app->singleton(ProgressDisplay::class);
+        $this->app->singleton(ExportCommandHandler::class);
+        $this->app->singleton(ImportCommandHandler::class);
+        $this->app->singleton(ProgressCommandHandler::class);
+        $this->app->singleton(MessageCommandHandler::class);
     }
 
     public function boot(): void

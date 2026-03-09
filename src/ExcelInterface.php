@@ -4,33 +4,17 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel;
 
-use BusinessG\LaravelExcel\Data\Export\ExportConfig;
-use BusinessG\LaravelExcel\Data\Export\ExportData;
-use BusinessG\LaravelExcel\Data\Import\ImportConfig;
-use BusinessG\LaravelExcel\Data\Import\ImportData;
-use BusinessG\LaravelExcel\Driver\DriverInterface;
-use BusinessG\LaravelExcel\Progress\ProgressRecord;
+use BusinessG\BaseExcel\Data\Export\ExportConfig;
+use BusinessG\BaseExcel\Data\Export\ExportData;
+use BusinessG\BaseExcel\Data\Import\ImportConfig;
+use BusinessG\BaseExcel\Data\Import\ImportData;
+use BusinessG\BaseExcel\Driver\DriverInterface;
+use BusinessG\BaseExcel\Progress\ProgressRecord;
 
-interface ExcelInterface
+/**
+ * Laravel Excel 接口，继承 base-excel 并扩展 peekMessage
+ */
+interface ExcelInterface extends \BusinessG\BaseExcel\ExcelInterface
 {
-    public function export(ExportConfig $config): ExportData;
-
-    public function import(ImportConfig $config): ImportData;
-
-    public function getProgressRecord(string $token): ?ProgressRecord;
-
-    public function popMessage(string $token, int $num = 50): array;
-
-    public function popMessageAndIsEnd(string $token, int $num = 50, bool &$isEnd = true): array;
-
-    public function pushMessage(string $token, string $message);
-
-    public function getDefaultDriver(): DriverInterface;
-
-    public function getDriverByName(string $driverName): DriverInterface;
-
-    public function getDriver(?string $driverName = null): DriverInterface;
-
-    public function getConfig(): array;
-
+    public function peekMessage(string $token, int $num = 50): array;
 }

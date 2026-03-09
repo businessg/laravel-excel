@@ -2,24 +2,24 @@
 
 namespace BusinessG\LaravelExcel;
 
-use BusinessG\LaravelExcel\Data\BaseConfig;
-use BusinessG\LaravelExcel\Data\Export\ExportConfig;
-use BusinessG\LaravelExcel\Data\Export\ExportData;
-use BusinessG\LaravelExcel\Data\Import\ImportConfig;
-use BusinessG\LaravelExcel\Data\Import\ImportData;
+use BusinessG\BaseExcel\Data\BaseConfig;
+use BusinessG\BaseExcel\Data\Export\ExportConfig;
+use BusinessG\BaseExcel\Data\Export\ExportData;
+use BusinessG\BaseExcel\Data\Import\ImportConfig;
+use BusinessG\BaseExcel\Data\Import\ImportData;
+use BusinessG\BaseExcel\Driver\DriverInterface;
+use BusinessG\BaseExcel\Event\AfterExport;
+use BusinessG\BaseExcel\Event\AfterImport;
+use BusinessG\BaseExcel\Event\BeforeExport;
+use BusinessG\BaseExcel\Event\BeforeImport;
+use BusinessG\BaseExcel\Event\Error;
+use BusinessG\BaseExcel\Exception\ExcelException;
+use BusinessG\BaseExcel\Progress\ProgressData;
+use BusinessG\BaseExcel\Progress\ProgressInterface;
+use BusinessG\BaseExcel\Progress\ProgressRecord;
+use BusinessG\BaseExcel\Queue\ExcelQueueInterface;
+use BusinessG\BaseExcel\Strategy\Token\TokenStrategyInterface;
 use BusinessG\LaravelExcel\Driver\DriverFactory;
-use BusinessG\LaravelExcel\Driver\DriverInterface;
-use BusinessG\LaravelExcel\Event\AfterExport;
-use BusinessG\LaravelExcel\Event\AfterImport;
-use BusinessG\LaravelExcel\Event\BeforeExport;
-use BusinessG\LaravelExcel\Event\BeforeImport;
-use BusinessG\LaravelExcel\Event\Error;
-use BusinessG\LaravelExcel\Exception\ExcelException;
-use BusinessG\LaravelExcel\Progress\ProgressData;
-use BusinessG\LaravelExcel\Progress\ProgressInterface;
-use BusinessG\LaravelExcel\Progress\ProgressRecord;
-use BusinessG\LaravelExcel\Queue\ExcelQueueInterface;
-use BusinessG\LaravelExcel\Strategy\Token\TokenStrategyInterface;
 use Illuminate\Contracts\Events\Dispatcher as EventsDispatcher;
 use Psr\Container\ContainerInterface;
 
@@ -54,7 +54,11 @@ class Excel implements ExcelInterface
                 return $exportData;
             }
 
-            $exportData = $driver->export($config);
+            $driverResult = $driver->export($config);
+            $exportData = new ExportData([
+                'token' => $driverResult->token,
+                'response' => $driverResult->response,
+            ]);
 
             $this->event->dispatch(new AfterExport($config, $driver, $exportData));
 
@@ -87,7 +91,11 @@ class Excel implements ExcelInterface
                 return $importData;
             }
 
-            $importData = $driver->import($config);
+            $driverResult = $driver->import($config);
+            $importData = new ImportData([
+                'token' => $driverResult->token,
+                'sheetData' => $driverResult->sheetData,
+            ]);
 
             $this->event->dispatch(new AfterImport($config, $driver, $importData));
 
@@ -112,9 +120,17 @@ class Excel implements ExcelInterface
         return $this->progress->popMessage($token, $num);
     }
 
-    public function pushMessage(string $token, string $message)
+    /**
+     * 调试用：读取消息（不消费），用于排查推送/获取问题
+     */
+    public function peekMessage(string $token, int $num = 50): array
     {
-        return $this->progress->pushMessage($token, $message);
+        return $this->progress->peekMessage($token, $num);
+    }
+
+    public function pushMessage(string $token, string $message): void
+    {
+        $this->progress->pushMessage($token, $message);
     }
 
     public function popMessageAndIsEnd(string $token, int $num = 50, bool &$isEnd = true): array
@@ -156,11 +172,11 @@ class Excel implements ExcelInterface
      * 推送队列
      *
      * @param BaseConfig $config
-     * @return bool
+     * @return void
      */
-    protected function pushQueue(BaseConfig $config): bool
+    protected function pushQueue(BaseConfig $config): void
     {
-        return $this->container->get(ExcelQueueInterface::class)->push($config);
+        $this->container->get(ExcelQueueInterface::class)->push($config);
     }
 
     /**

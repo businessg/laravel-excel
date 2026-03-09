@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel\Db;
 
-use BusinessG\LaravelExcel\Data\BaseConfig;
-use BusinessG\LaravelExcel\Data\Export\ExportConfig;
+use BusinessG\BaseExcel\Data\BaseConfig;
+use BusinessG\BaseExcel\Data\Export\ExportConfig;
+use BusinessG\BaseExcel\Progress\ProgressData;
+use BusinessG\BaseExcel\Progress\ProgressInterface;
+use BusinessG\BaseExcel\Progress\ProgressRecord;
 use BusinessG\LaravelExcel\Db\Model\ExcelLog as ExcelLogModel;
-use BusinessG\LaravelExcel\Progress\ProgressData;
-use BusinessG\LaravelExcel\Progress\ProgressInterface;
-use BusinessG\LaravelExcel\Progress\ProgressRecord;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 

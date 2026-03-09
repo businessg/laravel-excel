@@ -4,26 +4,19 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel\Command;
 
-use BusinessG\LaravelExcel\Data\Export\ExportConfig;
-use BusinessG\LaravelExcel\ExcelInterface;
+use BusinessG\BaseExcel\Console\ExportCommandHandler;
 use Illuminate\Console\Command;
-use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
-class ExportCommand extends AbstractCommand
+class ExportCommand extends Command
 {
-    protected ContainerInterface $container;
-    protected ExcelInterface $excel;
-
-    public function __construct(ContainerInterface $container, ExcelInterface $excel)
+    public function __construct(protected ExportCommandHandler $handler)
     {
-        $this->container = $container;
-        $this->excel = $excel;
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName('excel:export')
             ->setDescription('Run export')
@@ -33,27 +26,13 @@ class ExportCommand extends AbstractCommand
             ->addUsage('excel:export "App\Excel\DemoExportConfig" --no-progress');
     }
 
-    public function handle()
+    public function handle(): int
     {
-        $config = $this->argument('config');
-        $progress = $this->option('progress');
-
-        /**
-         * @var ExportConfig $config
-         */
-        $config = new $config([]);
-        if (!$config instanceof ExportConfig) {
-            $this->error('Invalid config: expected instance of ' . ExportConfig::class);
-            return 1;
-        }
-
-        $data = $this->excel->export($config);
-
-        $this->table(['token'], [[$data->token]]);
-
-        if ($progress) {
-            $this->showProgress($data->token);
-        }
-        return 0;
+        $result = $this->handler->handle(
+            $this->argument('config'),
+            $this->option('progress'),
+            $this->output
+        );
+        return $result['exitCode'];
     }
 }

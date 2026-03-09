@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace BusinessG\LaravelExcel\Command;
 
 use BusinessG\LaravelExcel\Driver\DriverFactory;
-use BusinessG\LaravelExcel\Helper\Helper;
+use BusinessG\BaseExcel\Helper\Helper;
 use BusinessG\LaravelExcel\Logger\ExcelLoggerInterface;
 use Illuminate\Console\Command;
 

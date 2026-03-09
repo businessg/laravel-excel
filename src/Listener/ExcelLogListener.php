@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel\Listener;
 
-use BusinessG\LaravelExcel\Event\AfterExportOutput;
-use BusinessG\LaravelExcel\Event\BeforeExportOutput;
+use BusinessG\BaseExcel\Event\AfterExportOutput;
+use BusinessG\BaseExcel\Event\BeforeExportOutput;
 
 /**
  * 监听输出日志

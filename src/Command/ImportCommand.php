@@ -4,26 +4,19 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel\Command;
 
-use BusinessG\LaravelExcel\Data\Import\ImportConfig;
-use BusinessG\LaravelExcel\ExcelInterface;
+use BusinessG\BaseExcel\Console\ImportCommandHandler;
 use Illuminate\Console\Command;
-use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
-class ImportCommand extends AbstractCommand
+class ImportCommand extends Command
 {
-    protected ContainerInterface $container;
-    protected ExcelInterface $excel;
-
-    public function __construct(ContainerInterface $container, ExcelInterface $excel)
+    public function __construct(protected ImportCommandHandler $handler)
     {
-        $this->container = $container;
-        $this->excel = $excel;
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName('excel:import')
             ->setDescription('Run import')
@@ -35,30 +28,14 @@ class ImportCommand extends AbstractCommand
             ->addUsage('excel:import "App\Excel\DemoImportConfig" "/excel/demo.xlsx" --no-progress');
     }
 
-    public function handle()
+    public function handle(): int
     {
-        $config = $this->argument('config');
-        $path = $this->argument('path');
-        $progress = $this->option('progress');
-
-        /**
-         * @var ImportConfig $config
-         */
-        $config = new $config([]);
-        if (!$config instanceof ImportConfig) {
-            $this->error('Invalid config: expected instance of ' . ImportConfig::class);
-            return 1;
-        }
-        if ($path) {
-            $config->setPath($path);
-        }
-        $data = $this->excel->import($config);
-
-        $this->table(['token'], [[$data->token]]);
-
-        if ($progress) {
-            $this->showProgress($data->token);
-        }
-        return 0;
+        $result = $this->handler->handle(
+            $this->argument('config'),
+            $this->argument('path'),
+            $this->option('progress'),
+            $this->output
+        );
+        return $result['exitCode'];
     }
 }

@@ -23,9 +23,16 @@
             "./src/Functions.php"
         ]
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../base-excel"
+        }
+    ],
     "require": {
         "php": ">=8.1",
         "ext-mbstring": "*",
+        "businessg/base-excel": "*",
         "illuminate/support": "^10.0|^11.0|^12.0",
         "illuminate/contracts": "^10.0|^11.0|^12.0",
         "illuminate/filesystem": "^10.0|^11.0|^12.0",
@@ -37,7 +44,8 @@
         "overtrue/http": "^1.2",
         "psr/container": "^1.0 || ^2.0",
         "psr/event-dispatcher": "^1.0",
-        "ramsey/uuid": "*"
+        "ramsey/uuid": "*",
+        "symfony/http-foundation": "^6.0|^7.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.0",

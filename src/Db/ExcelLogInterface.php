@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel\Db;
 
-use BusinessG\LaravelExcel\Data\BaseConfig;
+use BusinessG\BaseExcel\Data\BaseConfig;
 
 interface ExcelLogInterface
 {

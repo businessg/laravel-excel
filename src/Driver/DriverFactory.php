@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel\Driver;
 
-use BusinessG\LaravelExcel\Exception\InvalidDriverException;
+use BusinessG\BaseExcel\Driver\DriverInterface;
+use BusinessG\BaseExcel\Exception\InvalidDriverException;
 use Psr\Container\ContainerInterface;
 
 class DriverFactory

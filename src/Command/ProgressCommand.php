@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel\Command;
 
+use BusinessG\BaseExcel\Console\ProgressCommandHandler;
 use Illuminate\Console\Command;
-use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Input\InputArgument;
 
-class ProgressCommand extends AbstractCommand
+class ProgressCommand extends Command
 {
-    protected ContainerInterface $container;
-
-    public function __construct(ContainerInterface $container)
+    public function __construct(protected ProgressCommandHandler $handler)
     {
-        $this->container = $container;
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName('excel:progress')
             ->setDescription('View progress information')
@@ -26,10 +23,8 @@ class ProgressCommand extends AbstractCommand
             ->addUsage('excel:progress 168d8baf7fbc435c8ef18239e932b101');
     }
 
-    public function handle()
+    public function handle(): int
     {
-        $token = $this->argument('token');
-        $this->showProgress($token);
-        return 0;
+        return $this->handler->handle($this->argument('token'), $this->output);
     }
 }

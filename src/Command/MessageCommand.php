@@ -4,27 +4,19 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel\Command;
 
-use BusinessG\LaravelExcel\ExcelInterface;
-use BusinessG\LaravelExcel\Progress\ProgressInterface;
+use BusinessG\BaseExcel\Console\MessageCommandHandler;
 use Illuminate\Console\Command;
-use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
-class MessageCommand extends AbstractCommand
+class MessageCommand extends Command
 {
-    protected ContainerInterface $container;
-    protected ExcelInterface $excel;
-    protected ProgressInterface $progress;
-
-    public function __construct(ContainerInterface $container, ExcelInterface $excel)
+    public function __construct(protected MessageCommandHandler $handler)
     {
-        $this->container = $container;
-        $this->excel = $excel;
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName('excel:message')
             ->setDescription('View progress messages')
@@ -35,30 +27,13 @@ class MessageCommand extends AbstractCommand
             ->addUsage('excel:message 168d8baf7fbc435c8ef18239e932b101 --no-progress');
     }
 
-    public function handle()
+    public function handle(): int
     {
-        $token = $this->argument('token');
-        $num = (int) $this->option('num');
-        $progress = $this->option('progress');
-
-        $this->info("开始获取信息:");
-        do {
-            $progressRecord = $this->excel->getProgressRecord($token);
-            if (!$progressRecord) {
-                $this->error('未找到进度记录');
-                return 1;
-            }
-            $isEnd = false;
-            $messages = $this->excel->popMessageAndIsEnd($token, $num, $isEnd);
-            foreach ($messages as $message) {
-                $this->line($message);
-            }
-            usleep(500000);
-        } while (!$isEnd);
-
-        if ($progress) {
-            $this->showProgress($token);
-        }
-        return 0;
+        return $this->handler->handle(
+            $this->argument('token'),
+            (int) $this->option('num'),
+            $this->option('progress'),
+            $this->output
+        );
     }
 }
