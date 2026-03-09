@@ -4,32 +4,19 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel\Logger;
 
-use BusinessG\BaseExcel\Logger\ExcelLoggerInterface;
+use BusinessG\BaseExcel\Logger\AbstractExcelLogger;
 use Illuminate\Support\Facades\Log;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
-class ExcelLogger implements ExcelLoggerInterface
+class ExcelLogger extends AbstractExcelLogger
 {
-    protected LoggerInterface $logger;
-    protected array $config;
-
-    public function __construct(protected ContainerInterface $container)
+    protected function resolveConfig(): array
     {
-        $this->config = config('excel.logger', [
-            'name' => 'stack',
-        ]);
-        $channel = $this->config['name'] ?? 'stack';
-        $this->logger = Log::channel($channel);
+        return config('excel.logger', ['name' => 'stack']);
     }
 
-    public function getLogger(): LoggerInterface
+    protected function resolveLogger(): LoggerInterface
     {
-        return $this->logger;
-    }
-
-    public function getConfig(): array
-    {
-        return $this->config;
+        return Log::channel($this->config['name'] ?? 'stack');
     }
 }

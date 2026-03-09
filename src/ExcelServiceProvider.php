@@ -39,10 +39,12 @@ class ExcelServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/../publish/excel.php', 'excel');
 
+        \BusinessG\BaseExcel\ExcelFunctions::setContainerResolver(fn () => app());
+
 
         $this->app->singleton(DriverFactory::class);
         $this->app->bind(DriverInterface::class, function ($app) {
-            return $app->call(ExcelInvoker::class);
+            return $app->make(ExcelInvoker::class)($app);
         });
         $this->app->singleton(ProgressStorageInterface::class, LaravelProgressStorage::class);
         $this->app->singleton(ProgressInterface::class, function ($app) {

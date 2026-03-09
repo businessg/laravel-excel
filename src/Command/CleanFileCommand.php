@@ -23,16 +23,10 @@ class CleanFileCommand extends Command
             return 0;
         }
 
-        $dirs = [];
-        foreach ($configs['drivers'] ?? [] as $key => $item) {
+        $dirs = Helper::getDirectoriesToClean($driverFactory);
+        foreach ($dirs as $dir) {
             try {
-                $driver = $driverFactory->get($key);
-                $dir = $driver->getTempDir();
-                if (!$dir || !is_dir($dir) || in_array($dir, $dirs)) {
-                    continue;
-                }
                 $deleted = $this->cleanTempFile($dir, $configs);
-                $dirs[] = $dir;
                 if (!empty($deleted)) {
                     $this->info('Cleaned ' . count($deleted) . ' files from ' . $dir);
                 }

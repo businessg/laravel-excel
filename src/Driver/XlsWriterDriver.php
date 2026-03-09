@@ -7,7 +7,6 @@ namespace BusinessG\LaravelExcel\Driver;
 use BusinessG\BaseExcel\Data\Export\ExportConfig;
 use BusinessG\BaseExcel\Driver\XlsWriterDriver as BaseXlsWriterDriver;
 use BusinessG\LaravelExcel\LaravelEventDispatcherAdapter;
-use BusinessG\BaseExcel\Exception\ExcelException;
 use BusinessG\BaseExcel\Helper\Helper;
 use Illuminate\Support\Facades\Storage;
 use League\Flysystem\FilesystemOperator;
@@ -15,9 +14,6 @@ use Psr\Container\ContainerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-/**
- * Laravel 适配：继承 base-excel XlsWriterDriver，增加 Storage、StreamedResponse 支持
- */
 class XlsWriterDriver extends BaseXlsWriterDriver
 {
     public function __construct(ContainerInterface $container, array $config, string $name)
@@ -33,46 +29,23 @@ class XlsWriterDriver extends BaseXlsWriterDriver
         parent::__construct($container, $config, $name, $event, $filesystem);
     }
 
-    protected function exportOutPut(ExportConfig $config, string $filePath): string|StreamedResponse
+    protected function exportOutPutStream(ExportConfig $config, string $filePath, string $path): StreamedResponse
     {
-        $path = $this->buildExportPath($config);
         $fileName = basename($path);
-
-        switch ($config->outPutType) {
-            case ExportConfig::OUT_PUT_TYPE_UPLOAD:
-                return $this->uploadToStorage($filePath, $path);
-
-            case ExportConfig::OUT_PUT_TYPE_OUT:
-                $response = new StreamedResponse(function () use ($filePath) {
-                    $stream = fopen($filePath, 'r');
-                    fpassthru($stream);
-                    fclose($stream);
-                    $this->deleteFile($filePath);
-                });
-                $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-                $response->headers->set('Content-Disposition', 'attachment;filename="' . rawurlencode($fileName) . '"');
-                $response->headers->set('Content-Length', (string) filesize($filePath));
-                $response->headers->set('Content-Transfer-Encoding', 'binary');
-                $response->headers->set('Cache-Control', 'must-revalidate');
-                $response->headers->set('Cache-Control', 'max-age=0');
-                $response->headers->set('Pragma', 'public');
-
-                return $response;
-
-            default:
-                throw new ExcelException('outPutType error');
+        $response = new StreamedResponse(function () use ($filePath) {
+            $stream = fopen($filePath, 'r');
+            fpassthru($stream);
+            fclose($stream);
+            $this->deleteFile($filePath);
+        });
+        foreach (Helper::getExportResponseHeaders($fileName, $filePath) as $name => $value) {
+            $response->headers->set($name, $value);
         }
+        return $response;
     }
 
-    public function getTempDir(): string
+    protected function getTempDirSuffix(): string
     {
-        $dir = ($this->config['temp_dir'] ?? null) ?: Helper::getTempDir() . DIRECTORY_SEPARATOR . 'laravel-excel';
-        if (!is_dir($dir)) {
-            if (!mkdir($dir, 0777, true)) {
-                throw new ExcelException('Failed to build temporary directory: ' . $dir);
-            }
-        }
-
-        return $dir;
+        return 'laravel-excel';
     }
 }

@@ -2,15 +2,19 @@
 
 namespace BusinessG\LaravelExcel;
 
+use BusinessG\BaseExcel\ExcelInvoker as BaseExcelInvoker;
 use BusinessG\LaravelExcel\Driver\DriverFactory;
 use Psr\Container\ContainerInterface;
 
-class ExcelInvoker
+class ExcelInvoker extends BaseExcelInvoker
 {
-    public function __invoke(ContainerInterface $container)
+    protected function getDefaultDriverName(ContainerInterface $container): string
     {
-        $name = config('excel.default', 'xlswriter');
-        $factory = $container->get(DriverFactory::class);
-        return $factory->get($name);
+        return (string) config('excel.default', 'xlswriter');
+    }
+
+    protected function getDriverFactoryClass(): string
+    {
+        return DriverFactory::class;
     }
 }

@@ -6,7 +6,7 @@ namespace BusinessG\LaravelExcel\Queue\AsyncQueue\Job;
 
 class ImportJob extends BaseJob
 {
-    public function handle()
+    public function handle(): void
     {
         $this->getExcel()->import($this->config->setIsAsync(false));
     }
