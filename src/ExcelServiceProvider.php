@@ -46,7 +46,10 @@ use BusinessG\LaravelExcel\Command\ExportCommand;
 use BusinessG\LaravelExcel\Command\ImportCommand;
 use BusinessG\LaravelExcel\Command\MessageCommand;
 use BusinessG\LaravelExcel\Command\ProgressCommand;
+use BusinessG\BaseExcel\Service\ExcelBusinessService;
+use BusinessG\LaravelExcel\Http\Controller\ExcelController;
 use BusinessG\LaravelExcel\Queue\AsyncQueue\ExcelQueue;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Psr\EventDispatcher\EventDispatcherInterface;
 
@@ -55,6 +58,7 @@ class ExcelServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../publish/excel.php', 'excel');
+        $this->mergeConfigFrom(__DIR__ . '/../publish/excel_business.php', 'excel_business');
 
         \BusinessG\BaseExcel\ExcelFunctions::setContainerResolver(fn () => app());
 
@@ -90,6 +94,7 @@ class ExcelServiceProvider extends ServiceProvider
         $this->app->singleton(ExcelLogRepositoryInterface::class, LaravelExcelLogRepository::class);
         $this->app->singleton(ExcelLogInterface::class, ExcelLogManager::class);
         $this->app->singleton(ExcelInterface::class, AbstractExcel::class);
+        $this->app->singleton(ExcelBusinessService::class);
         $this->app->singleton(ExcelLoggerInterface::class, ExcelLogger::class);
         $this->app->singleton(ExcelQueueInterface::class, ExcelQueue::class);
         $this->app->singleton(ExportPathStrategyInterface::class, DateTimeExportPathStrategy::class);
@@ -114,10 +119,14 @@ class ExcelServiceProvider extends ServiceProvider
 
             $this->publishes([
                 __DIR__ . '/../publish/excel.php' => config_path('excel.php'),
+                __DIR__ . '/../publish/excel_business.php' => config_path('excel_business.php'),
             ], 'excel-config');
 
             $this->loadMigrationsFrom(__DIR__ . '/migrations');
         }
+
+        $this->registerRoutes();
+        $this->registerExceptionHandler();
 
         $dispatcher = $this->app->make(\Illuminate\Contracts\Events\Dispatcher::class);
 
@@ -128,5 +137,36 @@ class ExcelServiceProvider extends ServiceProvider
                 $dispatcher->listen($eventClass, [$listener, 'process']);
             }
         }
+    }
+
+    protected function registerExceptionHandler(): void
+    {
+        $handler = $this->app->make(\Illuminate\Foundation\Exceptions\Handler::class);
+        if (method_exists($handler, 'renderable')) {
+            $handler->renderable(function (\BusinessG\BaseExcel\Exception\ExcelException $e) {
+                return $this->app->make(\BusinessG\LaravelExcel\Exception\ExcelExceptionHandler::class)->render($e);
+            });
+        }
+    }
+
+    protected function registerRoutes(): void
+    {
+        $httpConfig = ExcelConfig::fromArray(config('excel', []))->http;
+        if (!$httpConfig->enabled) {
+            return;
+        }
+
+        Route::prefix($httpConfig->prefix)
+            ->middleware($httpConfig->middleware)
+            ->group(function () {
+                Route::prefix('excel')->group(function () {
+                    Route::match(['get', 'post'], 'export', [ExcelController::class, 'export']);
+                    Route::post('import', [ExcelController::class, 'import']);
+                    Route::get('progress', [ExcelController::class, 'progress']);
+                    Route::get('message', [ExcelController::class, 'message']);
+                    Route::get('info', [ExcelController::class, 'info']);
+                    Route::post('upload', [ExcelController::class, 'upload']);
+                });
+            });
     }
 }
