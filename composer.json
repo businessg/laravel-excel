@@ -23,17 +23,11 @@
             "BusinessG\\LaravelExcel\\Tests\\": "tests"
         }
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../base-excel"
-        }
-    ],
     "require": {
         "php": ">=8.1",
         "ext-mbstring": "*",
         "ext-xlswriter": "*",
-        "businessg/base-excel": "*",
+        "businessg/base-excel": "~1.0.0",
         "illuminate/support": "^10.0|^11.0|^12.0",
         "illuminate/contracts": "^10.0|^11.0|^12.0",
         "illuminate/filesystem": "^10.0|^11.0|^12.0",
