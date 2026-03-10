@@ -13,15 +13,15 @@
     "autoload": {
         "psr-4": {
             "BusinessG\\LaravelExcel\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "BusinessG\\LaravelExcel\\Tests\\": "tests"
         },
         "files": [
             "./src/Functions.php"
         ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "BusinessG\\LaravelExcel\\Tests\\": "tests"
+        }
     },
     "repositories": [
         {
@@ -32,6 +32,7 @@
     "require": {
         "php": ">=8.1",
         "ext-mbstring": "*",
+        "ext-xlswriter": "*",
         "businessg/base-excel": "*",
         "illuminate/support": "^10.0|^11.0|^12.0",
         "illuminate/contracts": "^10.0|^11.0|^12.0",

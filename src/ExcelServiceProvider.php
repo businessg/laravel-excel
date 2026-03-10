@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BusinessG\LaravelExcel;
 
 use BusinessG\BaseExcel\AbstractExcel;
+use BusinessG\BaseExcel\Config\ExcelConfig;
 use BusinessG\BaseExcel\Console\ExportCommandHandler;
 use BusinessG\BaseExcel\Console\ImportCommandHandler;
 use BusinessG\BaseExcel\Console\MessageCommandHandler;
@@ -21,6 +22,8 @@ use BusinessG\BaseExcel\Contract\RedisResolverInterface;
 use BusinessG\BaseExcel\Contract\ResponseFactoryInterface;
 use BusinessG\BaseExcel\Db\ExcelLogInterface;
 use BusinessG\BaseExcel\Db\ExcelLogManager;
+use BusinessG\BaseExcel\Db\ExcelLogRepositoryInterface;
+use BusinessG\LaravelExcel\Db\LaravelExcelLogRepository;
 use BusinessG\BaseExcel\Driver\DriverFactory;
 use BusinessG\BaseExcel\Driver\DriverInterface;
 use BusinessG\BaseExcel\ExcelInterface;
@@ -74,14 +77,17 @@ class ExcelServiceProvider extends ServiceProvider
         });
         $this->app->singleton(ProgressStorageInterface::class, BridgeProgressStorage::class);
         $this->app->singleton(ProgressInterface::class, function ($app) {
-            $config = config('excel.progress', [
-                'enable' => true,
-                'prefix' => 'LaravelExcel',
-                'expire' => 3600,
-            ]);
+            $excelConfig = ExcelConfig::fromArray(config('excel', []));
             $storage = $app->make(ProgressStorageInterface::class);
-            return new Progress($storage, $config);
+            return new Progress($storage, [
+                'enabled' => $excelConfig->progress->enabled,
+                'prefix' => $excelConfig->progress->prefix,
+                'ttl' => $excelConfig->progress->ttl,
+                'expire' => $excelConfig->progress->ttl,
+                'enable' => $excelConfig->progress->enabled,
+            ]);
         });
+        $this->app->singleton(ExcelLogRepositoryInterface::class, LaravelExcelLogRepository::class);
         $this->app->singleton(ExcelLogInterface::class, ExcelLogManager::class);
         $this->app->singleton(ExcelInterface::class, AbstractExcel::class);
         $this->app->singleton(ExcelLoggerInterface::class, ExcelLogger::class);

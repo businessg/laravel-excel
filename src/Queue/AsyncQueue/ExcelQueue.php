@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel\Queue\AsyncQueue;
 
+use BusinessG\BaseExcel\Config\ExcelConfig;
 use BusinessG\BaseExcel\Data\BaseConfig;
 use BusinessG\BaseExcel\Data\Export\ExportConfig;
 use BusinessG\BaseExcel\Queue\ExcelQueueInterface;
@@ -13,20 +14,27 @@ use Psr\Container\ContainerInterface;
 
 class ExcelQueue implements ExcelQueueInterface
 {
-    protected array $config;
+    protected ExcelConfig $excelConfig;
 
     public function __construct(protected ContainerInterface $container)
     {
-        $this->config = config('excel.queue', []);
+        $this->excelConfig = ExcelConfig::fromArray(config('excel', []));
     }
 
     public function push(BaseConfig $config): void
     {
         $job = $config instanceof ExportConfig ? new ExportJob($config) : new ImportJob($config);
-        $connection = $this->config['connection'] ?? $this->config['name'] ?? null;
+
+        $connection = $this->excelConfig->queue->connection;
         if ($connection) {
             $job->onConnection($connection);
         }
+
+        $channel = $this->excelConfig->queue->channel;
+        if ($channel && $channel !== 'default') {
+            $job->onQueue($channel);
+        }
+
         dispatch($job);
     }
 }
