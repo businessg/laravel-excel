@@ -6,7 +6,6 @@ namespace BusinessG\LaravelExcel\Command;
 
 use BusinessG\BaseExcel\Console\ProgressCommandHandler;
 use Illuminate\Console\Command;
-use Symfony\Component\Console\Input\InputArgument;
 
 class ProgressCommand extends Command
 {
@@ -17,14 +16,12 @@ class ProgressCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('excel:progress')
-            ->setDescription('View progress information')
-            ->addArgument('token', InputArgument::REQUIRED, 'The token of excel.')
-            ->addUsage('excel:progress 168d8baf7fbc435c8ef18239e932b101');
+        $this->setName(ProgressCommandHandler::getCommandName());
+        ProgressCommandHandler::configureTo($this);
     }
 
     public function handle(): int
     {
-        return $this->handler->handle($this->argument('token'), $this->output);
+        return $this->handler->handle($this->input->getArgument('token'), $this->output);
     }
 }

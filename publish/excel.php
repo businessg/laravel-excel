@@ -6,7 +6,7 @@ return [
     'default' => 'xlswriter',
     'drivers' => [
         'xlswriter' => [
-            'driver' => \BusinessG\LaravelExcel\Driver\XlsWriterDriver::class,
+            'driver' => \BusinessG\BaseExcel\Driver\XlsWriterDriver::class,
         ],
     ],
     'options' => [

@@ -6,8 +6,6 @@ namespace BusinessG\LaravelExcel\Command;
 
 use BusinessG\BaseExcel\Console\ExportCommandHandler;
 use Illuminate\Console\Command;
-use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputOption;
 
 class ExportCommand extends Command
 {
@@ -18,21 +16,16 @@ class ExportCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('excel:export')
-            ->setDescription('Run export')
-            ->addArgument('config', InputArgument::REQUIRED, 'The config of export.')
-            ->addOption('progress', 'g', InputOption::VALUE_NEGATABLE, 'The progress of export.', true)
-            ->addUsage('excel:export "App\Excel\DemoExportConfig"')
-            ->addUsage('excel:export "App\Excel\DemoExportConfig" --no-progress');
+        $this->setName(ExportCommandHandler::getCommandName());
+        ExportCommandHandler::configureTo($this);
     }
 
     public function handle(): int
     {
-        $result = $this->handler->handle(
-            $this->argument('config'),
-            $this->option('progress'),
+        return $this->handler->handle(
+            $this->input->getArgument('config'),
+            $this->input->getOption('progress'),
             $this->output
-        );
-        return $result['exitCode'];
+        )['exitCode'];
     }
 }
