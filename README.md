@@ -36,14 +36,40 @@ Laravel 框架的 Excel 同步/异步导入导出组件。基于 [businessg/base
 
 | 依赖 | 版本 | 说明 |
 |---|---|---|
-| PHP | >= 8.1 | 需启用 mbstring 扩展 |
+| PHP | >= 8.1 | |
 | Laravel | 10.x / 11.x / 12.x | |
-| ext-xlswriter | * | Excel 读写驱动，`pecl install xlswriter` |
-| ext-redis | * | 进度追踪依赖 Redis |
+| Swoole / Roadrunner | 可选 | 仅异步队列 Worker 运行时需要 |
 | Redis 服务 | 任意版本 | 需运行中，用于进度存储和消息队列 |
 | MySQL | 5.7+ | 仅 `dbLog.enabled=true` 时需要 |
 
-### 1.2 安装
+### 1.2 PHP 扩展
+
+以下 PHP 扩展必须安装并启用：
+
+```bash
+# xlswriter — Excel 读写核心驱动
+pecl install xlswriter
+# 安装后在 php.ini 中添加：extension=xlswriter
+
+# redis — 进度追踪和消息队列依赖
+pecl install redis
+# 安装后在 php.ini 中添加：extension=redis
+
+# mbstring — 字符串处理（通常已内置）
+# 如未启用：apt install php-mbstring 或 yum install php-mbstring
+```
+
+验证扩展已安装：
+
+```bash
+php -m | grep -E "xlswriter|redis|mbstring"
+# 应输出：
+# mbstring
+# redis
+# xlswriter
+```
+
+### 1.3 安装
 
 ```bash
 composer require businessg/laravel-excel
@@ -51,7 +77,70 @@ composer require businessg/laravel-excel
 
 > 包已配置 Laravel Package Auto-Discovery，`ExcelServiceProvider` 自动注册，无需手动添加。
 
-### 1.3 发布配置文件
+### 1.4 依赖组件说明
+
+以下 Composer 包由组件自动引入，无需手动安装。但部分包需要**确认配置已正确**：
+
+| 依赖包 | 用途 | 需要的配置 |
+|---|---|---|
+| `businessg/base-excel` | 核心库（自动安装） | 无 |
+| `illuminate/filesystem` | 导出文件存储 | 确认 `config/filesystems.php` 中有对应的 disk（默认 `local`） |
+| `illuminate/redis` | 进度追踪、消息队列 | 确认 `config/database.php` 中 `redis` 连接配置正确 |
+| `illuminate/queue` | 异步导入导出 | 确认 `config/queue.php` 中有可用连接（推荐 `redis`） |
+| `illuminate/database` | 数据库日志 | 仅 `dbLog.enabled=true` 时需要 |
+| `league/flysystem` | 文件系统抽象层（base-excel 依赖） | 无需额外配置 |
+| `ramsey/uuid` | 生成任务 token | 无 |
+
+**重点检查项：**
+
+**1) Filesystem（文件系统）**
+
+导出文件默认存储到 `local` 磁盘。确认 `config/filesystems.php` 中配置：
+
+```php
+'disks' => [
+    'local' => [
+        'driver' => 'local',
+        'root'   => storage_path('app'),
+    ],
+],
+```
+
+> 如需存储到 OSS/S3 等云存储，安装对应 Flysystem 适配器并修改 `excel.php` 的 `drivers.xlswriter.disk`。
+
+**2) Redis**
+
+确认 `config/database.php` 中 Redis 配置可连接：
+
+```php
+'redis' => [
+    'client' => env('REDIS_CLIENT', 'phpredis'), // 推荐 phpredis（即 ext-redis）
+    'default' => [
+        'host'     => env('REDIS_HOST', '127.0.0.1'),
+        'password' => env('REDIS_PASSWORD', null),
+        'port'     => env('REDIS_PORT', 6379),
+        'database' => env('REDIS_DB', 0),
+    ],
+],
+```
+
+**3) Queue（异步模式需要）**
+
+使用异步导入导出时，确认队列连接：
+
+```php
+// config/queue.php
+'connections' => [
+    'redis' => [
+        'driver'      => 'redis',
+        'connection'  => 'default',
+        'queue'       => 'default',
+        'retry_after' => 90,
+    ],
+],
+```
+
+### 1.5 发布配置文件
 
 ```bash
 php artisan vendor:publish --tag=excel-config
@@ -62,7 +151,7 @@ php artisan vendor:publish --tag=excel-config
 - `config/excel.php` — 组件核心配置
 - `config/excel_business.php` — 业务导入导出配置
 
-### 1.4 数据库迁移
+### 1.6 数据库迁移
 
 启用数据库日志（`dbLog.enabled = true`）时执行：
 
