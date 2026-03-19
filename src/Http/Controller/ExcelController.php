@@ -98,13 +98,15 @@ class ExcelController extends Controller
         ]);
 
         $file = $request->file('file');
+        $uploadDir = config('excel.http.upload.dir', 'excel-import');
+        $uploadDisk = config('excel.http.upload.disk', 'local');
         $path = $file->storeAs(
-            'excel-import/' . date('Y/m/d'),
+            $uploadDir . '/' . date('Y/m/d'),
             Str::random(40) . '.' . $file->getClientOriginalExtension(),
-            'local'
+            $uploadDisk
         );
 
-        $fullPath = Storage::disk('local')->path($path);
+        $fullPath = Storage::disk($uploadDisk)->path($path);
 
         return response()->json(
             $this->service->successResponse([
