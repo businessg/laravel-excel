@@ -46,7 +46,8 @@ class ExcelController extends Controller
 
         $result = $this->service->importByBusinessId(
             $request->input('business_id'),
-            $request->input('url')
+            $request->input('url'),
+            $request->input('param', [])
         );
 
         return response()->json($this->service->successResponse(['token' => $result['token']]));
