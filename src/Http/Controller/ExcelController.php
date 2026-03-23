@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BusinessG\LaravelExcel\Http\Controller;
 
+use BusinessG\BaseExcel\Exception\ExcelErrorCode;
 use BusinessG\BaseExcel\Service\ExcelBusinessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,7 +23,7 @@ class ExcelController extends Controller
     {
         $businessId = $request->input('business_id', '');
         if (!$businessId) {
-            return response()->json($this->service->errorResponse(422, 'business_id 必填'), 422);
+            return response()->json($this->service->errorResponse(ExcelErrorCode::BUSINESS_ID_REQUIRED, 'business_id 必填'));
         }
 
         $result = $this->service->exportByBusinessId(
