@@ -106,7 +106,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | 注册到 Laravel 事件系统的 BaseExcel 监听器类名列表。
-    | 留空或未配置时使用 businessg/base-excel 包内 config/listeners.php 的默认值。
+    | 留空或未配置时使用 BusinessG\BaseExcel\Config\ListenersConfig 的默认类名。
     |
     */
     'listeners' => [

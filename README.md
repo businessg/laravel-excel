@@ -200,7 +200,7 @@ return [
     | listeners — 事件监听器类名列表
     |----------------------------------------------------------------------
     | 注册到 Laravel 事件系统的 BaseExcel 监听器（AbstractBaseListener 子类）。
-    | 省略本项或设为 [] 时，使用 businessg/base-excel 包内 config/listeners.php 的默认值。
+    | 省略本项或设为 [] 时，使用 BusinessG\BaseExcel\Config\ListenersConfig 的默认类名。
     */
     'listeners' => [
         \BusinessG\BaseExcel\Listener\ProgressListener::class,
@@ -277,11 +277,11 @@ return [
 
 ### 2.1.1 事件监听器（listeners）
 
-`ExcelServiceProvider` 在启动时使用 `ListenerRegistrar::resolveListeners(config('excel', []))` 将监听器挂到 Laravel 事件上。
+`ExcelServiceProvider` 在启动时使用 `ExcelConfig::fromArray(config('excel', []))->listeners->classNames` 将监听器挂到 Laravel 事件上（等价于 `ListenersConfig::fromExcelArray(config('excel', []))->classNames`）。
 
 | 行为 | 说明 |
 | --- | --- |
-| `listeners` 未配置或为空数组 | 使用 **base-excel** 包内 `vendor/businessg/base-excel/config/listeners.php` 中的默认类名（进度、数据库日志等）。 |
+| `listeners` 未配置或为空数组 | 使用 **base-excel** 中 `ListenersConfig` 的默认类名（进度、数据库日志等）。 |
 | `listeners` 为非空数组 | 仅注册列表中的类名；元素须为 **非空字符串**（完整类名），且类须继承 `AbstractBaseListener` 并可通过容器解析。 |
 
 默认内置监听器通常包括 `ProgressListener`（与 `progress` 配置配合）和 `ExcelLogDbListener`（与 `dbLog` 配置配合）。若从列表中移除某一监听器，对应能力将不再通过事件触发，请同时确认相关配置项是否仍需要。
