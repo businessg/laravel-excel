@@ -24,6 +24,9 @@ class ExcelQueue implements ExcelQueueInterface
     public function push(BaseConfig $config): void
     {
         $job = $config instanceof ExportConfig ? new ExportJob($config) : new ImportJob($config);
+        if ($this->excelConfig->queue->tries !== null) {
+            $job->tries = $this->excelConfig->queue->tries;
+        }
 
         $connection = $this->excelConfig->queue->connection;
         if ($connection) {

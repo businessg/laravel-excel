@@ -17,8 +17,6 @@ abstract class BaseJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, ExcelJobTrait;
 
-    public int $tries = 3;
-
     public function __construct(BaseConfig $config)
     {
         $this->config = $config;

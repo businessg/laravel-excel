@@ -56,6 +56,8 @@ return [
     | 当导入/导出配置为异步 (isAsync=true) 时，任务将推送到队列执行。
     |  - connection: 队列连接名，对应 config/queue.php 中的 connections key
     |  - channel:    队列名称，对应 Laravel 的 queue name (onQueue)
+    |  - tries:      可选。异步 Job 最多尝试次数（含首次）；仅当需要覆盖时再配置此项，
+    |                 否则由 Laravel 队列全局配置（如 queue:work --tries）决定
     |
     */
     'queue' => [

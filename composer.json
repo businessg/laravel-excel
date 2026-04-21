@@ -1,6 +1,7 @@
 {
     "name": "businessg/laravel-excel",
     "type": "library",
+    "version": "1.0.1-beta.6",
     "license": "MIT",
     "keywords": [
         "php",
@@ -27,7 +28,7 @@
         "php": ">=8.1",
         "ext-mbstring": "*",
         "ext-xlswriter": "*",
-        "businessg/base-excel": "~1.0.1",
+        "businessg/base-excel": "^1.0.1-beta.6",
         "illuminate/support": "^10.0|^11.0|^12.0",
         "illuminate/contracts": "^10.0|^11.0|^12.0",
         "illuminate/filesystem": "^10.0|^11.0|^12.0",
