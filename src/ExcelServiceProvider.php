@@ -130,7 +130,7 @@ class ExcelServiceProvider extends ServiceProvider
 
         $dispatcher = $this->app->make(\Illuminate\Contracts\Events\Dispatcher::class);
 
-        foreach (ListenerRegistrar::getDefaultListeners() as $listenerClass) {
+        foreach (ListenerRegistrar::resolveListeners(config('excel', [])) as $listenerClass) {
             /** @var AbstractBaseListener $listener */
             $listener = $this->app->make($listenerClass);
             foreach ($listener->listen() as $eventClass) {
