@@ -197,14 +197,20 @@ return [
 
     /*
     |----------------------------------------------------------------------
-    | listeners — 事件监听器类名列表
+    | 事件监听器（Laravel Event）
     |----------------------------------------------------------------------
-    | 注册到 Laravel 事件系统的 BaseExcel 监听器（AbstractBaseListener 子类）。
-    | 省略本项或设为 [] 时，使用 BusinessG\BaseExcel\Config\ListenersConfig 的默认类名。
+    | 内置默认（始终启用，无需重复声明）：
+    |   - ProgressListener    进度追踪（受 progress.enabled 控制）
+    |   - ExcelLogDbListener  数据库日志（受 dbLog.enabled 控制）
+    |
+    | 本项为**追加**监听器：
+    |   - 未配置或 []：仅使用默认
+    |   - 配置类名：在默认之后追加注册，自动按序去重
+    |
+    | 自定义监听器需继承 \BusinessG\BaseExcel\Listener\AbstractBaseListener。
     */
     'listeners' => [
-        \BusinessG\BaseExcel\Listener\ProgressListener::class,
-        \BusinessG\BaseExcel\Listener\ExcelLogDbListener::class,
+        // \BusinessG\BaseExcel\Listener\ExcelLogListener::class,
     ],
 
     /*
@@ -277,14 +283,50 @@ return [
 
 ### 2.1.1 事件监听器（listeners）
 
-`ExcelServiceProvider` 在启动时使用 `ExcelConfig::fromArray(config('excel', []))->listeners->classNames` 将监听器挂到 Laravel 事件上（等价于 `ListenersConfig::fromExcelArray(config('excel', []))->classNames`）。
+组件启动时会把"内置默认监听器 + `listeners` 追加配置"合并后注册到 Laravel Event。
 
-| 行为 | 说明 |
-| --- | --- |
-| `listeners` 未配置或为空数组 | 使用 **base-excel** 中 `ListenersConfig` 的默认类名（进度、数据库日志等）。 |
-| `listeners` 为非空数组 | 仅注册列表中的类名；元素须为 **非空字符串**（完整类名），且类须继承 `AbstractBaseListener` 并可通过容器解析。 |
+**内置默认监听器（始终启用，无需在 `listeners` 中重复声明）：**
 
-默认内置监听器通常包括 `ProgressListener`（与 `progress` 配置配合）和 `ExcelLogDbListener`（与 `dbLog` 配置配合）。若从列表中移除某一监听器，对应能力将不再通过事件触发，请同时确认相关配置项是否仍需要。
+| 监听器 | 作用 | 开关 |
+|---|---|---|
+| `BusinessG\BaseExcel\Listener\ProgressListener` | 进度追踪，将进度写入 Redis | `progress.enabled` |
+| `BusinessG\BaseExcel\Listener\ExcelLogDbListener` | 数据库日志，写入 `excel_log` 表 | `dbLog.enabled` |
+
+**`listeners` 语义——追加，不是覆盖：**
+
+- 不配置或 `[]`：仅注册默认监听器
+- 配置类名数组：在默认之后按顺序追加注册
+- 重复类名：自动去重（按首次出现位置保留）
+
+**最小示例（启用过程日志监听）：**
+
+```php
+'listeners' => [
+    \BusinessG\BaseExcel\Listener\ExcelLogListener::class,
+],
+```
+
+**编写自定义监听器：**
+
+继承 `BusinessG\BaseExcel\Listener\AbstractBaseListener`，通过 `listen()` 返回关注的事件类名数组，`process()` 统一路由到同名方法（支持的事件见 `BusinessG\BaseExcel\Event\*`）。
+
+```php
+use BusinessG\BaseExcel\Event\AfterExport;
+use BusinessG\BaseExcel\Listener\AbstractBaseListener;
+
+class MyExportListener extends AbstractBaseListener
+{
+    public function listen(): array
+    {
+        return [AfterExport::class];
+    }
+
+    public function afterExport(AfterExport $event): void
+    {
+        // $event->config 即当前导出配置
+    }
+}
+```
 
 ### 2.2 excel_business.php — 业务配置
 

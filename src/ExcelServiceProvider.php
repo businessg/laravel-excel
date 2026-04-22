@@ -29,6 +29,7 @@ use BusinessG\BaseExcel\Driver\DriverInterface;
 use BusinessG\BaseExcel\ExcelInterface;
 use BusinessG\BaseExcel\ExcelInvoker;
 use BusinessG\BaseExcel\Listener\AbstractBaseListener;
+use BusinessG\BaseExcel\Listener\ListenerRegistrar;
 use BusinessG\BaseExcel\Logger\ExcelLogger;
 use BusinessG\BaseExcel\Logger\ExcelLoggerInterface;
 use BusinessG\BaseExcel\Progress\Progress;
@@ -129,7 +130,7 @@ class ExcelServiceProvider extends ServiceProvider
 
         $dispatcher = $this->app->make(\Illuminate\Contracts\Events\Dispatcher::class);
 
-        foreach (ExcelConfig::fromArray(config('excel', []))->listeners->classNames as $listenerClass) {
+        foreach (ListenerRegistrar::resolveListeners(config('excel', [])) as $listenerClass) {
             /** @var AbstractBaseListener $listener */
             $listener = $this->app->make($listenerClass);
             foreach ($listener->listen() as $eventClass) {

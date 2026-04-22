@@ -102,16 +102,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | 事件监听器
+    | 事件监听器（Laravel Event）
     |--------------------------------------------------------------------------
     |
-    | 注册到 Laravel 事件系统的 BaseExcel 监听器类名列表。
-    | 留空或未配置时使用 BusinessG\BaseExcel\Config\ListenersConfig 的默认类名。
+    | 组件内置默认监听器（始终启用，无需在此重复声明）：
+    |   - \BusinessG\BaseExcel\Listener\ProgressListener    进度追踪（受 progress.enabled 控制）
+    |   - \BusinessG\BaseExcel\Listener\ExcelLogDbListener  数据库日志（受 dbLog.enabled 控制）
+    |
+    | 这里是“追加监听器”配置，不是覆盖默认监听器：
+    |  - 未配置或 []：仅使用组件默认监听器
+    |  - 配置类名：在默认监听器后追加注册（默认在前，追加在后）
+    |  - 重复类名：自动去重（同类只保留一份，按首次出现位置保留）
+    |
+    | 自定义监听器需继承 \BusinessG\BaseExcel\Listener\AbstractBaseListener，
+    | 通过 listen() 返回事件类名数组、process() 分发到具体事件方法。
+    | 需要把导入导出过程打到日志时，可取消下面一行注释（日志通道见上「logging」）。
     |
     */
     'listeners' => [
-        \BusinessG\BaseExcel\Listener\ProgressListener::class,
-        \BusinessG\BaseExcel\Listener\ExcelLogDbListener::class,
+        // \BusinessG\BaseExcel\Listener\ExcelLogListener::class,
     ],
 
     /*
